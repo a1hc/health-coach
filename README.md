@@ -1,1 +1,1 @@
-# health-coach
+# America's #1 Health Coach Web Application
