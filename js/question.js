@@ -1,11 +1,49 @@
 $(document).ready(function(){
 	$( "#nextBtn" ).on( "click", next );
 	$( "#backBtn" ).on( "click", prev );
+	$( "label.popMessage").on("click", modalMessage);
 
 	for(i = 1; i <= QUESTIONS.number; i++){
 		$("button#q-" + i).on("click", navigate);
 	}
 });
+
+function modalMessage(){
+	$this = $(this);
+	const qType = ($this.find("input").attr("name"));
+	const response = $this.text();
+	switch(qType){
+		case QTYPE.BREAKFAST:
+			if(response === "Yes"){
+				$(".modal-title").text("Breakfast Can Help");
+				$(".modal-body").text("Yes! Eating breakfast can boost your metabolism.");
+			}
+			else{
+				$(".modal-body").text("Place Holder");
+			}
+			break;
+		case QTYPE.SLEEP:
+			if(response === "Yes"){
+				$(".modal-title").text("Sleeping Enough Can Help");
+				$(".modal-body").text("Yes! You are getting the healthy amount of sleep.");
+			}
+			else{
+				$(".modal-body").text("Place Holder");
+			}
+			break;
+		case QTYPE.EXERCISEHR:
+			if(response === "0-5 Hours"){
+				$(".modal-title").text("Exercising Can Help");
+				$(".modal-body").text("Yes! Exercising can improve your physical strength and fitness!");
+			}
+			else{
+				$(".modal-title").text("Exercising Can Help");
+				$(".modal-body").text("Yes! Exercising can improve your physical strength and fitness!");
+			}
+			break;
+		default:
+	}
+}
 
 function navigate(){
 	const currQ = getQuestion();
@@ -101,4 +139,10 @@ const INPUT = {
 
 const QUESTIONS = {
 	"number" : 4
+}
+
+const QTYPE ={
+	"BREAKFAST" : "breakfast",
+	"SLEEP" : "sleep",
+	"EXERCISEHR" : "exercise"
 }
