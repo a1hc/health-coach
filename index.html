@@ -5,22 +5,76 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<link href="css/bootstrap-theme.min.css" rel="stylesheet">
 	<link href="css/bootstrap.min.css" rel="stylesheet">
-	<style type="text/css">
-		.logo{
-			margin-top: 20px;
-		}
-	</style>
+	<link href="css/question.css" rel="stylesheet">
 <title>America's #1 Health Coach</title>
 </head>
 <body>
-	<div class="text-center logo">
-		<img src="resources/img/logo/SmallLogo.png" alt="A1HC Logo"/>
+	<div class="container text-center">
+		<div class="page-header logo">
+			<img src="resources/img/logo/SmallLogo.png" alt="A1HC Logo"/>
+		</div>
+
+		<div class="stepwizard">
+		    <div class="stepwizard-row">
+		        <div class="stepwizard-step">
+		            <button type="button" class="btn btn-info btn-circle active" id="q-1">1</button>
+		            <p>Question 1</p>
+		        </div>
+		        <div class="stepwizard-step">
+		            <button type="button" class="btn btn-info btn-circle" id="q-2">2</button>
+		            <p>Question 2</p>
+		        </div>
+		        <div class="stepwizard-step">
+		            <button type="button" class="btn btn-info btn-circle" id="q-3">3</button>
+		            <p>Question 3</p>
+		        </div> 
+		        <div class="stepwizard-step">
+		            <button type="button" class="btn btn-info btn-circle" id="q-4">4</button>
+		            <p>Question 4</p>
+		        </div> 
+		    </div>
+		</div>
+
+		<form class="container">
+			<div class="form-group question1">
+				<h2>1. Please tell us your gender.</h2>
+				<div class="btn-group btn-group-toggle" data-toggle="buttons">
+					<label class="btn btn-primary btn-lg"><input type="radio" name="gender" id="male">Male</label>
+					<label class="btn btn-primary btn-lg"><input type="radio" name="gender" id="female">Female</label>
+				</div>
+			</div>
+			<div class="form-group question2">
+				<h2>2. Do you eat breakfast?</h2>
+				<div class="btn-group btn-group-toggle" data-toggle="buttons">
+					<label class="btn btn-primary btn-lg"><input type="radio" name="breakfast" id="yes">Yes</label>
+					<label class="btn btn-primary btn-lg"><input type="radio" name="breakfast" id="no">No</label>
+				</div>
+			</div>
+			<div class="form-group question3">
+				<h2>3. Do you sleep 8-hours or more a night?</h2>
+				<div class="btn-group btn-group-toggle" data-toggle="buttons">
+					<label class="btn btn-primary btn-lg"><input type="radio" name="sleep" id="yes">Yes</label>
+					<label class="btn btn-primary btn-lg"><input type="radio" name="sleep" id="no">No</label>
+				</div>
+			</div>
+			<div class="form-group question4">
+				<h2>4. How many hours a week do you exercise?</h2>
+				<div class="btn-group btn-group-toggle" data-toggle="buttons">
+					<label class="btn btn-primary btn-lg"><input type="radio" name="exercise" id="5">0-5 Hours</label></label>
+					<label class="btn btn-primary btn-lg"><input type="radio" name="exercise" id="10">6-10 Hours</label>
+				</div>
+			</div>
+		</form>
+
+		<div class="container next-prev row">
+			<button class="pull-left btn btn-success" id="backBtn">&#8249; Back</button>
+			<button class="pull-right btn btn-success" id="nextBtn">Next &#8250;</button>
+		</div>
 	</div>
-
-
 
 	<script src="js/jquery-3.3.1.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
+	<script src="js/question.js"></script>
 	<noscript>Your browser does not support JavaScript.</noscript>
 </body>
 </html>
