@@ -33,63 +33,83 @@ function modalMessage(){
 	$this = $(this);
 	const qType = ($this.find("input").attr("name"));
 	const response = $this.find("input").val();
-	console.log(response);
 	switch(qType){
 		case QTYPE.BREAKFAST:
 			if(response === "yes"){
 				$('#message').modal('toggle');
-				$(".modal-title").text("Breakfast Can Help");
-				$(".modal-body p").text("Yes! Eating breakfast can boost your metabolism.");
+				$("#message .modal-title").text("Breakfast Can Help");
+				$("#message .modal-body p").text("Yes! Eating breakfast can boost your metabolism.");
 				$("#video").hide();
-			}
-			else{
-				if(INPUT.gender === "female"){
-					$('#message').modal('toggle');
-					$(".modal-title").text("Diet is important!");
-					$(".modal-body p").text("You have a fairly good diet. I think you might like this video: <Test Video 1>");
-					var videoIFrame = $('#message').find("iframe");
-					var videoSrc = videoIFrame.attr('src');
-					videoIFrame.attr('src', 'https://www.youtube.com/embed/C0DPdy98e4c');	
-					$("#video").show();
-				}
-				else{
-					$('#message').modal('toggle');
-					$(".modal-title").text("Diet is important!");
-					$(".modal-body p").text("You have a fairly good diet. I think you might like this video: <Test Video 2>");
-					var videoIFrame = $('#message').find("iframe");
-					var videoSrc = videoIFrame.attr('src');
-					videoIFrame.attr('src', 'https://www.youtube.com/embed/Es44QTJmuZ0');	
-					$("#video").show();
-				}
 			}
 			break;
 		case QTYPE.SLEEP:
 			if(response === "yes"){
 				$('#message').modal('toggle');
-				$(".modal-title").text("Sleeping Enough Can Help");
-				$(".modal-body p").text("Yes! You are getting the healthy amount of sleep.");
+				$("#message .modal-title").text("Sleeping Enough Can Help");
+				$("#message .modal-body p").text("Yes! You are getting the healthy amount of sleep.");
 				$("#video").hide();
-			}
-			else{
-				if(INPUT.gender === "male"){
-					$('#message').modal('toggle');
-					$(".modal-title").text("Sleeping is important!");
-					$(".modal-body p").text("Sleep does wonders! I think you might like this <http://www.rxfitpro.com/product/antense/>.");
-					$("#video").hide();
-				}
 			}
 			break;
 		case QTYPE.EXERCISEHR:
 			if(response === "0-5" && INPUT.gender === "male" && INPUT.sleep === "no"){
 				$('#message').modal('toggle');
-				$(".modal-title").text("Let's talk!");
-				$(".modal-body p").text("You and I should talk. Let’s schedule a consultation.");
+				$("#message .modal-title").text("Let's talk!");
+				$("#message .modal-body p").text("You and I should talk. Let’s schedule a consultation.");
 				$("#video").hide();
 			}
+			displaySuggestion();
 			break;
 		default:
 	}
 }
+
+function displaySuggestion(){
+
+	var display = false;
+	/* Check whether all inputs are valid */ 
+	for (var key in INPUT) {
+		if(key === null || key === undefined) return false;
+	}
+
+	$("#video").hide();
+	$("#product").hide();
+
+	if(INPUT.breakfast === "no"){
+		if(INPUT.gender === "female"){
+			display = true;
+			$("#youTubeVideo p").text("You have a fairly good diet. I think you might like this video: <Test Video 1>");
+			var videoIFrame = $('#suggestion').find("iframe");
+			var videoSrc = videoIFrame.attr('src');
+			videoIFrame.attr('src', 'https://www.youtube.com/embed/QG5Wiy_X4Yk');	
+			$("#video").show();
+		}
+		else{
+			display = true;
+			$("#youTubeVideo p").text("You have a fairly good diet. I think you might like this video: <Test Video 2>");
+			var videoIFrame = $('#suggestion').find("iframe");
+			var videoSrc = videoIFrame.attr('src');
+			videoIFrame.attr('src', 'https://www.youtube.com/embed/QG5Wiy_X4Yk');	
+			$("#video").show();
+		}
+	}
+
+	if(INPUT.sleep === "no"){
+		if(INPUT.gender === "male"){
+			display = true;
+			$("#product p").text("Sleep does wonders! I think you might like this <http://www.rxfitpro.com/product/antense/>.");
+			$("#product").show();	
+		}
+	}
+
+	if(display) {
+		$('#suggestion').modal('toggle');
+	}
+
+	return true;
+
+}
+
+
 
 function navigate(){
 	const currQ = getQuestion();
