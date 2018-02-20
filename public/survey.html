@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="google-signin-client_id" content="987235951797-kke3utu5elsiij7lf3vka3jmfo5i5qqb.apps.googleusercontent.com">
+	<link href="css/bootstrap-theme.min.css" rel="stylesheet" type='text/css'>
+	<link href="css/bootstrap.min.css" rel="stylesheet" type='text/css'>
+	<link href="css/survey.css" rel="stylesheet" type='text/css'>
+	<title>America's #1 Health Coach</title>
+</head>
+<body>
+	<div class="container text-center">
+		<div class="page-header logo">
+			<img src="resources/img/logo/SmallLogo.png" alt="A1HC Logo"/>
+		</div>
+
+		<h2 class="text-center">Welcome <span id="display-name"></span>!</h2>
+		<button class="btn btn-success surveyBtn">Let's take a survey!</button>
+		
+		<div class="survey-container"></div>
+
+		<template id="survey-temp">
+			
+		</template>
+
+	</div>
+    <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-firestore.js"></script>
+	<script src="js/jquery-3.3.1.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script type="module" src="modules/db.js"></script>
+	<script type="module" src="js/survey.js"></script>
+	<noscript>Your browser does not support JavaScript.</noscript>
+</body>
+</html>
