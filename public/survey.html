@@ -15,23 +15,31 @@
 			<img src="resources/img/logo/SmallLogo.png" alt="A1HC Logo"/>
 		</div>
 
-		<h2 class="text-center">Welcome <span id="display-name"></span>!</h2>
+		<h2 class="text-center">Welcome&nbsp;<span id="display-name"></span>!</h2>
 		<button class="btn btn-success surveyBtn">Let's take a survey!</button>
 		
+		<form name="surveyForm">
+			<div id="survey-container">
 
-		
+			</div>
+			<div class="buttons">
+				<button class="pull-left btn btn-success" id="backBtn" onsubmit="return false">&#8249; Back</button>
+				<button class="pull-right btn btn-success" id="nextBtn" onsubmit="return false">Next &#8250;</button>
+				<button class="btn btn-success" id="submitBtn" type="submit" onsubmit="return false">Update</button>
+			</div>
+		</form>
 
-		<div id="survey-container">
-
-		</div>
-
+		<template id="section">
+			<div>
+				<hr/>
+				<h3 class="text-center"></h3>
+			</div>
+		</template>
 
 		<template id="binaryTemp">
-			<p>Question</p>
-			<div class="options">
-				<label class="radio-inline"><input type="radio" name="question" value="yes" required>Yes</label>
-				<label class="radio-inline"><input type="radio" name="question" value="no" required>No</label>
-			</div>
+			<!-- Question -->
+			<p></p>
+			<div class="options"></div>
 		</template>
 
 	</div>

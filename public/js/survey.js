@@ -8,11 +8,24 @@ window.addEventListener('DOMContentLoaded', function () {
 				name: user.displayName,
 		        email: user.email
     		};
+
     		document.querySelector("#display-name").innerHTML = user.displayName;
-    		writeUserInfo(user.uid, userObj);
+ 
+    		var userRef = db.collection("users").doc(user.uid);
+			userRef.get().then(function(doc) {
+			    if (!doc.exists) {
+			    	writeUserInfo(user.uid, userObj);
+			    }
+			}).catch(function(error) {
+			    console.log("Error getting document:", error);
+			});
 
     		const surveyBtn = document.querySelector('.surveyBtn');
     		surveyBtn.addEventListener('click', function(event) { initalizeSurvey(event)}, false);
+
+    		const nextBtn = document.querySelector("#nextBtn");
+    		nextBtn.addEventListener('click', function(event) { storeSurvey(event)}, false);
+
 		} else {
 			console.error("No one is signed in");
 			location.replace("index.html");
@@ -33,59 +46,127 @@ function initalizeSurvey(event){
 	var btn = event.target;
 	btn.style.display = "none";
 
-	const mQRef = db.collection("questionnaires").doc("morality");
-	const questionSet = db.collection("questionnaires").doc("morality").collection("set");
+	document.querySelector("#nextBtn").style.visibility = "visible";
 
-	 db.collection("questionnaires").get().then(function(querySnapshot) {
+	const questionRef =  db.collection("questionnaires");
+	const container = document.querySelector("#survey-container");
+
+	questionRef.get().then(function(querySnapshot) {
 	    querySnapshot.forEach(function(doc) {
 	        // doc.data() is never undefined for query doc snapshots
 	        console.log(doc.id, " => ", doc.data());
-	        
+	        let sectionId = doc.id;
+	        let sectionTitle = doc.data().title;
+	        let sectionValue = doc.data().totalValue;
 
-	    });
-	});
+	        let tSection = document.querySelector('#section');
+	       	tSection.content.querySelector('div').setAttribute('id', sectionId);      
+	       	tSection.content.querySelector('div h3').innerHTML = sectionTitle;
+	       	let clonedTemplate = document.importNode(tSection.content, true);
+	       	container.appendChild(clonedTemplate);
 
-	questionSet.get().then(function(querySnapshot) {
-	    querySnapshot.forEach(function(doc) {
-	        // doc.data() is never undefined for query doc snapshots
-	        console.log(doc.id, " => ", doc.data());
-	        
-	        let questId = doc.id;
-	        let questData = doc.data();
-	        let questValue = questData.value;
-	        var container = document.querySelector("#survey-container");
+	       	const sectionContainer = document.querySelector("div#"+sectionId);
+	       	sectionContainer.appendChild(clonedTemplate);
+	       	const questionSet = questionRef.doc(sectionId).collection("set");
 
-	        if(questData.binaryQuestion){
-	        	let tBinary = document.querySelector('#binaryTemp');
-	        	tBinary.content.querySelector('p').innerHTML = questData.question;
-	        	tBinary.content.querySelector('p').setAttribute('id', questId);
-	        	let optionMARKUP = ``;
-	        	questData.choice.options.forEach(function(option){
-	        		optionMARKUP += renderBinaryQuestion(questId, option.optionValue, questValue, option.isPositive);
-	        	});
+			questionSet.get().then(function(querySnapshot) {
+			    querySnapshot.forEach(function(doc) {
+			        console.log(doc.id, " => ", doc.data());
+			        
+			        let questId = doc.id;
+			        let questData = doc.data();
+			        let questValue = questData.value;
+			        let questionNumber = questId.charAt(1);
 
-	        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
-	        	let clonedTemplate = document.importNode(tBinary.content, true);
-	        	container.appendChild(clonedTemplate);
+			        if(questData.binaryQuestion){
+			        	let tBinary = document.querySelector('#binaryTemp');
+			        	tBinary.content.querySelector('p').innerHTML = questionNumber + ". " +questData.question;
+			        	tBinary.content.querySelector('p').setAttribute('id', questId);
+			        	let optionMARKUP = ``;
+			        	
+			        	questData.choice.options.forEach(function(option){
+			        		optionMARKUP += renderBinaryQuestion(questId, option.optionValue, questValue, option.isPositive);
+			        	});
 
-	        }
-	        else{
-	        	console.log("Not a binary question.")
-	        }
-
+			        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
+			        	
+			        	let clonedTemplate = document.importNode(tBinary.content, true);
+			        	sectionContainer.appendChild(clonedTemplate);
+			        }
+			        else{
+			        	//TODO: binary questions
+			        	console.log("Not a binary question.")
+			        }
+			    });
+			});
 	    });
 	});
 }
 
+function displayNextSurvey(event){
+	console.log("Save it to database");
+	storeSurveyDB("surveyForm");
+}
+
+function storeSurvey(event){
+	const formName = "surveyForm";
+	const form = document.forms[formName];
+
+	//To trigger the HTML5 Built-in Validation
+	if(form.checkValidity()){
+		storeSurveyDB(formName);
+		event.preventDefault();
+	}
+	else{
+		return 0;
+	}
+}
+
+
+function storeSurveyDB(formName){
+	const userId = firebase.auth().currentUser.uid;
+	const userRef = db.collection("users").doc(userId);
+
+	userRef.get().then(function(doc) {
+		if (doc.exists){
+			const form = document.forms[formName];
+			const inputList = form.querySelectorAll("input:checked");
+			const responseRef = userRef.collection("responses");
+
+			inputList.forEach(function(input) {
+				let questId = input.name.split('-')[1];
+				const responseObj = createResponseObj(input);
+
+				console.log(responseObj);
+
+				responseRef.doc(questId).set(responseObj).then(function() {
+					console.log("Successfully saved to database");
+				}).catch(function(error) {
+					console.error("Error while writing document: ", error);
+				});
+			});			
+		} else {
+			console.error("No such document!");
+		}
+	}).catch(function(error){
+		console.error("Error getting document:", error);
+	});
+
+
+}
+
+function createResponseObj(input){
+	return {
+		"answerValue" : parseInt(input.value),
+		"answerText" : input.getAttribute('data-text')
+	};
+}
 
 function renderBinaryQuestion(questId, optionText, questionValue, isPositive){
 	let MARKUP =``;
 	let qValue = questionValue;
-	if(!isPositive){
-		qValue = -questionValue;
-	}
-	console.log(qValue);
-	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" required>${optionText}</label>`;
+	if(!isPositive){ qValue = -questionValue; }
+	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" data-text="${optionText}" required>${optionText}</label>`;
 	return MARKUP;
 }
 
