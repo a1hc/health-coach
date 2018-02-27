@@ -1,0 +1,41 @@
+[debug] [2018-02-27T00:30:57.339Z] ----------------------------------------------------------------------
+[debug] [2018-02-27T00:30:57.342Z] Command:       /usr/local/bin/node /usr/local/bin/firebase serve
+[debug] [2018-02-27T00:30:57.343Z] CLI Version:   3.17.4
+[debug] [2018-02-27T00:30:57.343Z] Platform:      darwin
+[debug] [2018-02-27T00:30:57.343Z] Node Version:  v6.11.4
+[debug] [2018-02-27T00:30:57.344Z] Time:          Mon Feb 26 2018 16:30:57 GMT-0800 (PST)
+[debug] [2018-02-27T00:30:57.345Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-02-27T00:30:57.379Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-02-27T00:30:57.380Z] > authorizing via signed-in user
+[debug] [2018-02-27T00:30:57.383Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-02-27T00:30:57.383Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ { refresh_token: '1/e4kOs66sWuopEcGedrfJcVGApcJs4tYNiMfvEJtyI-c',
+  client_id: '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+  client_secret: 'j9iVZfS8kkCEFUPaAeJV0sAi',
+  grant_type: 'refresh_token',
+  scope: 'email https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/cloudplatformprojects.readonly https://www.googleapis.com/auth/firebase openid' } 
+ Mon Feb 26 2018 16:30:57 GMT-0800 (PST)
+[debug] [2018-02-27T00:30:57.621Z] <<< HTTP RESPONSE 200
+[debug] [2018-02-27T00:30:57.642Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/a1hc-9bf44  
+  
+ Mon Feb 26 2018 16:30:57 GMT-0800 (PST)
+[debug] [2018-02-27T00:30:58.328Z] <<< HTTP RESPONSE 200
+[debug] [2018-02-27T00:30:58.329Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/database/a1hc-9bf44/tokens  
+  
+ Mon Feb 26 2018 16:30:58 GMT-0800 (PST)
+[debug] [2018-02-27T00:30:58.780Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Serving from '/Users/emilyjung/Desktop/health-coach'...
+[info] 
+[debug] [2018-02-27T00:30:58.785Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/a1hc-9bf44  
+  
+ Mon Feb 26 2018 16:30:58 GMT-0800 (PST)
+[debug] [2018-02-27T00:30:59.410Z] <<< HTTP RESPONSE 200
+[debug] [2018-02-27T00:30:59.411Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/987235951797/clients/_:getWebAppConfig  
+  
+ Mon Feb 26 2018 16:30:59 GMT-0800 (PST)
+[debug] [2018-02-27T00:31:00.113Z] <<< HTTP RESPONSE 200
+[info] i  hosting: Serving hosting files from: public
+[info] ✔  hosting: Local server: http://localhost:5000
+

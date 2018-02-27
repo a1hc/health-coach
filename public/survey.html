@@ -18,10 +18,20 @@
 		<h2 class="text-center">Welcome <span id="display-name"></span>!</h2>
 		<button class="btn btn-success surveyBtn">Let's take a survey!</button>
 		
-		<div class="survey-container"></div>
 
-		<template id="survey-temp">
-			
+		
+
+		<div id="survey-container">
+
+		</div>
+
+
+		<template id="binaryTemp">
+			<p>Question</p>
+			<div class="options">
+				<label class="radio-inline"><input type="radio" name="question" value="yes" required>Yes</label>
+				<label class="radio-inline"><input type="radio" name="question" value="no" required>No</label>
+			</div>
 		</template>
 
 	</div>

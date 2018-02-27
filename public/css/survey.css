@@ -11,8 +11,12 @@ body{
   margin-left: auto;
 }
 
-.surveyBtn{
-  font-size: larger;
+.logo{
+  margin: 10px 0;
+}
+
+.logo img{
+  width: 35%;
 }
 
 @media (min-width: 768px) {
