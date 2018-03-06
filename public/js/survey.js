@@ -24,7 +24,7 @@ window.addEventListener('DOMContentLoaded', function () {
     		surveyBtn.addEventListener('click', function(event) { initalizeSurvey(event)}, false);
 
     		const nextBtn = document.querySelector("#nextBtn");
-    		nextBtn.addEventListener('click', function(event) { storeSurvey(event)}, false);
+    		nextBtn.addEventListener('click', function(event) { nextSurvey(event)}, false);
 
 		} else {
 			console.error("No one is signed in");
@@ -77,6 +77,7 @@ function initalizeSurvey(event){
 			        let questData = doc.data();
 			        let questValue = questData.value;
 			        let questionNumber = questId.charAt(1);
+			        let followUpVal = questData.followUp ? questData.followUpVal : NaN; 
 
 			        if(questData.binaryQuestion){
 			        	let tBinary = document.querySelector('#binaryTemp');
@@ -85,7 +86,7 @@ function initalizeSurvey(event){
 			        	let optionMARKUP = ``;
 			        	
 			        	questData.choice.options.forEach(function(option){
-			        		optionMARKUP += renderBinaryQuestion(questId, option.optionValue, questValue, option.isPositive);
+			        		optionMARKUP += renderBinaryQuestion(questId, option.optionValue, questValue, option.isPositive, followUpVal);
 			        	});
 
 			        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
@@ -103,7 +104,7 @@ function initalizeSurvey(event){
 			        	let optionValue = questValue/(questData.choice.options.length);
 			        	
 			        	questData.choice.options.forEach(function(option){
-			        		optionMARKUP += renderRecallQuestion(questId, option.optionValue, optionValue);
+			        		optionMARKUP += renderRecallQuestion(questId, option.optionValue, optionValue, followUpVal);
 			        	});
 
 			        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
@@ -120,9 +121,56 @@ function initalizeSurvey(event){
 	});
 }
 
-function displayNextSurvey(event){
-	console.log("Save it to database");
-	storeSurveyDB("surveyForm");
+function displayFollowUp(followUpList){
+	console.log(followUpList);
+
+}
+
+function nextSurvey(event){
+	const formName = "surveyForm";
+	const form = document.forms[formName];
+
+	//To trigger the HTML5 Built-in Validation
+	if(form.checkValidity()){
+		event.preventDefault();
+		const fList = checkFollowUp(formName);
+		displayFollowUp(fList);
+	}
+	else{
+		return 0;
+	}	
+}
+
+function checkFollowUp(formName){
+	const form = document.forms[formName];
+	const radioInputList = form.querySelectorAll("input[type=radio]:checked");
+	const checkInputList = form.querySelectorAll("input[type=checkbox]:checked");
+	let followUpList = [];
+	let questId = -1;
+	let fValue = 0;
+	let checkboxText = [];
+	let checkboxValue = 0;
+
+	radioInputList.forEach(function(input) {
+		questId = input.name.split('-')[1];
+		fValue = input.getAttribute('data-fValue');
+		if(input.value === fValue){
+			followUpList.push(questId);
+		}
+	});
+
+	checkInputList.forEach(function(input) {
+		questId = input.name.split('-')[1];
+		checkboxText.push(input.getAttribute('data-text'));
+		checkboxValue += parseInt(input.value);
+		fValue = input.getAttribute('data-fValue');
+	});	
+
+	if (checkboxValue === fValue){
+		followUpList.push(questId);
+	}
+
+	return followUpList;
 }
 
 function storeSurvey(event){
@@ -131,14 +179,13 @@ function storeSurvey(event){
 
 	//To trigger the HTML5 Built-in Validation
 	if(form.checkValidity()){
-		storeSurveyDB(formName);
 		event.preventDefault();
+		storeSurveyDB(formName);
 	}
 	else{
 		return 0;
 	}
 }
-
 
 function storeSurveyDB(formName){
 	const userId = firebase.auth().currentUser.uid;
@@ -151,26 +198,30 @@ function storeSurveyDB(formName){
 			const checkInputList = form.querySelectorAll("input[type=checkbox]:checked");
 			const responseRef = userRef.collection("responses");
 			let surveyResult = 0;
+			let checkboxValue = 0;
+			let checkboxText = [];
+			let questId = -1;
 
 			radioInputList.forEach(function(input) {
 				let questId = input.name.split('-')[1];
 				const responseObj = createResponseObj(input);
-
-				if(isNaN(input.value)){
-					let numValue = parseInt(input.value);
-					surveyResult += numValue;
+						
+				if(parseInt(input.value) > 0){
+					surveyResult += parseInt(input.value); 
+				}
+						
+				let fValue = input.getAttribute('data-fValue');
+				if(input.value === fValue){
+					followUpList.push(questId);
 				}
 
+				// Writes the survey overall result (positive)
 				responseRef.doc(questId).set(responseObj).then(function() {
 					console.log("Successfully saved to database");
 				}).catch(function(error) {
 					console.error("Error while writing document: ", error);
 				});
 			});	
-
-			let checkboxText = [];
-			let checkboxValue = 0;
-			let questId = -1;
 
 			// Assume that there is only one checkbox question
 			checkInputList.forEach(function(input) {
@@ -179,17 +230,18 @@ function storeSurveyDB(formName){
 				checkboxValue += parseInt(input.value);
 			});	
 
-			surveyResult += checkboxValue; 
+			surveyResult+=checkboxValue;
 			const responseObj = {"answerValue": checkboxValue, "answerText": checkboxText};
 
 			if(checkInputList.length > 0 && questId != -1){
 				responseRef.doc(questId).set(responseObj).then(function() {
 					console.log("Successfully saved to database");
+
 				}).catch(function(error) {
 					console.error("Error while writing document: ", error);
 				});
 			}
-			
+
 			responseRef.doc("surveyResult").set({"value":surveyResult}).then(function() {
 				console.log("Successfully saved to database");
 			}).catch(function(error) {
@@ -207,28 +259,24 @@ function storeSurveyDB(formName){
 function createResponseObj(input){
 	let answerValue = 0;
 
-	if(Number.isInteger(input.value)){
-		answerValue = parseInt(input.value);
-	}
-
 	return {
-		"answerValue" : answerValue,
+		"answerValue" : parseInt(input.value),
 		"answerText" : input.getAttribute('data-text')
 	};
 }
 
-function renderBinaryQuestion(questId, optionText, questionValue, isPositive){
+function renderBinaryQuestion(questId, optionText, questionValue, isPositive, followUpVal){
 	let MARKUP =``;
 	let qValue = questionValue;
 	if(!isPositive){ qValue = -questionValue; }
-	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" data-text="${optionText}" required>${optionText}</label>`;
+	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" data-fValue = "${followUpVal}" data-text="${optionText}" required>${optionText}</label>`;
 	return MARKUP;
 }
 
-function renderRecallQuestion(questId, optionText, questionValue){
+function renderRecallQuestion(questId, optionText, questionValue, followUpVal){
 	let MARKUP = ``;
 	let qValue = questionValue;
-	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-text="${optionText}">${optionText}</label>`;
+	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-fValue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
 	return MARKUP; 
 }
 
