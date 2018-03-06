@@ -80,7 +80,7 @@ function initalizeSurvey(event){
 
 			        if(questData.binaryQuestion){
 			        	let tBinary = document.querySelector('#binaryTemp');
-			        	tBinary.content.querySelector('p').innerHTML = questionNumber + ". " +questData.question;
+			        	tBinary.content.querySelector('p').innerHTML = questionNumber + ". " + questData.question;
 			        	tBinary.content.querySelector('p').setAttribute('id', questId);
 			        	let optionMARKUP = ``;
 			        	
@@ -93,9 +93,26 @@ function initalizeSurvey(event){
 			        	let clonedTemplate = document.importNode(tBinary.content, true);
 			        	sectionContainer.appendChild(clonedTemplate);
 			        }
+			        else if(questData.recallQuestion){
+			        	console.log("Recall question found");
+
+			        	let tBinary = document.querySelector('#binaryTemp');
+			        	tBinary.content.querySelector('p').innerHTML = questionNumber + ". " + questData.question;
+			        	tBinary.content.querySelector('p').setAttribute('id', questId);
+			        	let optionMARKUP = ``;
+			        	let optionValue = questValue/(questData.choice.options.length);
+			        	
+			        	questData.choice.options.forEach(function(option){
+			        		optionMARKUP += renderRecallQuestion(questId, option.optionValue, optionValue);
+			        	});
+
+			        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
+			        	
+			        	let clonedTemplate = document.importNode(tBinary.content, true);
+			        	sectionContainer.appendChild(clonedTemplate);
+			        }
 			        else{
-			        	//TODO: binary questions
-			        	console.log("Not a binary question.")
+			        	console.log("Not a binary question or a recall question.")
 			        }
 			    });
 			});
@@ -130,34 +147,72 @@ function storeSurveyDB(formName){
 	userRef.get().then(function(doc) {
 		if (doc.exists){
 			const form = document.forms[formName];
-			const inputList = form.querySelectorAll("input:checked");
+			const radioInputList = form.querySelectorAll("input[type=radio]:checked");
+			const checkInputList = form.querySelectorAll("input[type=checkbox]:checked");
 			const responseRef = userRef.collection("responses");
+			let surveyResult = 0;
 
-			inputList.forEach(function(input) {
+			radioInputList.forEach(function(input) {
 				let questId = input.name.split('-')[1];
 				const responseObj = createResponseObj(input);
 
-				console.log(responseObj);
+				if(isNaN(input.value)){
+					let numValue = parseInt(input.value);
+					surveyResult += numValue;
+				}
 
 				responseRef.doc(questId).set(responseObj).then(function() {
 					console.log("Successfully saved to database");
 				}).catch(function(error) {
 					console.error("Error while writing document: ", error);
 				});
-			});			
+			});	
+
+			let checkboxText = [];
+			let checkboxValue = 0;
+			let questId = -1;
+
+			// Assume that there is only one checkbox question
+			checkInputList.forEach(function(input) {
+				questId = input.name.split('-')[1];
+				checkboxText.push(input.getAttribute('data-text'));
+				checkboxValue += parseInt(input.value);
+			});	
+
+			surveyResult += checkboxValue; 
+			const responseObj = {"answerValue": checkboxValue, "answerText": checkboxText};
+
+			if(checkInputList.length > 0 && questId != -1){
+				responseRef.doc(questId).set(responseObj).then(function() {
+					console.log("Successfully saved to database");
+				}).catch(function(error) {
+					console.error("Error while writing document: ", error);
+				});
+			}
+			
+			responseRef.doc("surveyResult").set({"value":surveyResult}).then(function() {
+				console.log("Successfully saved to database");
+			}).catch(function(error) {
+				console.error("Error while writing document: ", error);
+			});
+
 		} else {
 			console.error("No such document!");
 		}
 	}).catch(function(error){
 		console.error("Error getting document:", error);
 	});
-
-
 }
 
 function createResponseObj(input){
+	let answerValue = 0;
+
+	if(Number.isInteger(input.value)){
+		answerValue = parseInt(input.value);
+	}
+
 	return {
-		"answerValue" : parseInt(input.value),
+		"answerValue" : answerValue,
 		"answerText" : input.getAttribute('data-text')
 	};
 }
@@ -168,6 +223,13 @@ function renderBinaryQuestion(questId, optionText, questionValue, isPositive){
 	if(!isPositive){ qValue = -questionValue; }
 	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" data-text="${optionText}" required>${optionText}</label>`;
 	return MARKUP;
+}
+
+function renderRecallQuestion(questId, optionText, questionValue){
+	let MARKUP = ``;
+	let qValue = questionValue;
+	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-text="${optionText}">${optionText}</label>`;
+	return MARKUP; 
 }
 
 /*

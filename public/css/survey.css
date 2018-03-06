@@ -16,6 +16,10 @@ body{
   width: 80%;
 }
 
+label{
+  font-weight: normal;
+}
+
 .container{
   padding-right: 0; 
   padding-left: 0; 
