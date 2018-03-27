@@ -153,7 +153,8 @@ function checkFollowUp(formName){
 
 	radioInputList.forEach(function(input) {
 		questId = input.name.split('-')[1];
-		fValue = input.getAttribute('data-fValue');
+		fValue = input.getAttribute('data-fvalue');
+		console.log("fValue for questionId " + questId + " is " + fValue);
 		if(input.value === fValue){
 			followUpList.push(questId);
 		}
@@ -163,7 +164,7 @@ function checkFollowUp(formName){
 		questId = input.name.split('-')[1];
 		checkboxText.push(input.getAttribute('data-text'));
 		checkboxValue += parseInt(input.value);
-		fValue = input.getAttribute('data-fValue');
+		fValue = input.getAttribute('data-fvalue');
 	});	
 
 	if (checkboxValue === fValue){
@@ -210,7 +211,7 @@ function storeSurveyDB(formName){
 					surveyResult += parseInt(input.value); 
 				}
 						
-				let fValue = input.getAttribute('data-fValue');
+				let fValue = input.getAttribute('data-fvalue');
 				if(input.value === fValue){
 					followUpList.push(questId);
 				}
@@ -269,14 +270,14 @@ function renderBinaryQuestion(questId, optionText, questionValue, isPositive, fo
 	let MARKUP =``;
 	let qValue = questionValue;
 	if(!isPositive){ qValue = -questionValue; }
-	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" data-fValue = "${followUpVal}" data-text="${optionText}" required>${optionText}</label>`;
+	MARKUP = `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${qValue}" data-fvalue = "${followUpVal}" data-text="${optionText}" required>${optionText}</label>`;
 	return MARKUP;
 }
 
 function renderRecallQuestion(questId, optionText, questionValue, followUpVal){
 	let MARKUP = ``;
 	let qValue = questionValue;
-	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-fValue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
+	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-fvalue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
 	return MARKUP; 
 }
 
