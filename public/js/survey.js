@@ -29,6 +29,9 @@ window.addEventListener('DOMContentLoaded', function () {
     		const backBtn = document.querySelector("#backBtn");
     		backBtn.addEventListener('click', function(event) { displayPrimary(event)}, false);
 
+    		const submitBtn = document.querySelector("#submitBtn");
+    		submitBtn.addEventListener('click', function(event) { storeSurvey(event)}, false);
+
 		} else {
 			console.error("No one is signed in");
 			location.replace("index.html");
@@ -262,11 +265,11 @@ function nextSurvey(event){
 	}	
 }
 
-
 function getFollowUpQ(formName){
 	const form = document.forms[formName];
 	const radioInputList = form.querySelectorAll("input[type=radio]:checked");
 	const checkInputList = form.querySelectorAll("input[type=checkbox]:checked");
+	let surveyResult = 0;
 
 	let followUpList = {
 		m:[],
@@ -286,6 +289,9 @@ function getFollowUpQ(formName){
 		if(input.value === fValue){
 			followUpList[questId[0]].push(questId);
 		}
+		if(parseInt(input.value) > 0){
+			surveyResult += parseInt(input.value); 
+		}
 		let responseObj = createResponseObj(input);
 		RESPONSE[questId] = responseObj;
 	});
@@ -301,21 +307,25 @@ function getFollowUpQ(formName){
 	if (checkboxValue === fValue){
 		followUpList[questId[0]].push(questId);
 	}
+
+	surveyResult+=checkboxValue;
  
 	let responseObj = {"answerValue": checkboxValue, "answerText": checkboxText};
 	RESPONSE[questId] = responseObj;
+	RESPONSE["primaryResult"] = surveyResult;
 
 	console.log(RESPONSE);
 	return followUpList;
 }
 
 function storeSurvey(event){
-	const formName = "surveyForm";
+	const formName = "followUpForm";
 	const form = document.forms[formName];
 
 	//To trigger the HTML5 Built-in Validation
 	if(form.checkValidity()){
 		event.preventDefault();
+		getFollowUpResponse(formName);
 		storeSurveyDB(formName);
 	}
 	else{
@@ -323,69 +333,39 @@ function storeSurvey(event){
 	}
 }
 
+function getFollowUpResponse(formName){
+	const form = document.forms[formName];
+	const radioInputList = form.querySelectorAll("input[type=radio]:checked");
+	const selectInputList = form.querySelectorAll("select");
 
-//Need REFACTORING : 
+	radioInputList.forEach(function(input) {
+		let questId = input.name.split('-')[1];
+		let responseObj = createResponseObj(input);
+		RESPONSE[questId] = responseObj;
+	});
+
+	selectInputList.forEach(function(element) {
+		let questId = element.name.split('-')[1];
+		let optionText = element.selectedOptions[0].text;
+		let optionValue = parseInt(element.selectedOptions[0].value);
+		let responseObj = {"answerValue": optionValue, "answerText": optionText};
+		RESPONSE[questId] = responseObj;
+	});	
+}
+ 
 function storeSurveyDB(formName){
 	const userId = firebase.auth().currentUser.uid;
 	const userRef = db.collection("users").doc(userId);
 
 	userRef.get().then(function(doc) {
-		if (doc.exists){
-			const form = document.forms[formName];
-			const radioInputList = form.querySelectorAll("input[type=radio]:checked");
-			const checkInputList = form.querySelectorAll("input[type=checkbox]:checked");
-			const responseRef = userRef.collection("responses");
-			let surveyResult = 0;
-			let checkboxValue = 0;
-			let checkboxText = [];
-			let questId = -1;
-
-			radioInputList.forEach(function(input) {
-				let questId = input.name.split('-')[1];
-				const responseObj = createResponseObj(input);
-						
-				if(parseInt(input.value) > 0){
-					surveyResult += parseInt(input.value); 
-				}
-						
-				let fValue = input.getAttribute('data-fvalue');
-				if(input.value === fValue){
-					followUpList.push(questId);
-				}
-
-				// Writes the survey overall result (positive)
-				responseRef.doc(questId).set(responseObj).then(function() {
-					console.log("Successfully saved to database");
-				}).catch(function(error) {
-					console.error("Error while writing document: ", error);
-				});
-			});	
-
-			// Assume that there is only one checkbox question
-			checkInputList.forEach(function(input) {
-				questId = input.name.split('-')[1];
-				checkboxText.push(input.getAttribute('data-text'));
-				checkboxValue += parseInt(input.value);
-			});	
-
-			surveyResult+=checkboxValue;
-			const responseObj = {"answerValue": checkboxValue, "answerText": checkboxText};
-
-			if(checkInputList.length > 0 && questId != -1){
-				responseRef.doc(questId).set(responseObj).then(function() {
-					console.log("Successfully saved to database");
-
-				}).catch(function(error) {
-					console.error("Error while writing document: ", error);
-				});
-			}
-
-			responseRef.doc("surveyResult").set({"value":surveyResult}).then(function() {
+		if (doc.exists){			
+			userRef.collection("response").doc("surveyResult").set(RESPONSE).then(function() {
 				console.log("Successfully saved to database");
+				alert("Successfully saved your survey response!");
+				window.location.replace("survey.html");
 			}).catch(function(error) {
 				console.error("Error while writing document: ", error);
 			});
-
 		} else {
 			console.error("No such document!");
 		}
@@ -429,7 +409,7 @@ function renderFollowUpDropdownOptions(optionText, priority){
 }
 
 function renderFollowUpDropdownQuestion(questId, optionsMARKUP){
-	let MARKUP = `<select class="form-control" name="question-${questId}">`;
+	let MARKUP = `<select class="form-control" name="question-${questId}" required"><option value="" disabled selected hidden>Please Choose...</option>`;
 	return MARKUP + optionsMARKUP + `</select>`;
 }
 
