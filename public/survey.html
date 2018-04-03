@@ -18,14 +18,18 @@
 		<h2 class="text-center">Welcome&nbsp;<span id="display-name"></span>!</h2>
 		<button class="btn btn-success surveyBtn">Let's take a survey!</button>
 		
-		<form name="surveyForm">
-			<div id="survey-container">
-
-			</div>
+		<form id="primaryQ" name="primaryQuestForm">
+			<div id="primary-container"></div>
 			<div class="buttons">
-				<button class="pull-left btn btn-success" id="backBtn" onsubmit="return false">&#8249; Back</button>
-				<button class="pull-right btn btn-success" id="nextBtn" onsubmit="return false">Next &#8250;</button>
-				<button class="btn btn-success" id="submitBtn" type="submit" onsubmit="return false">Update</button>
+				<button class="pull-right btn btn-primary" id="nextBtn" onsubmit="return false">Next &#8250;</button>
+			</div>
+		</form>
+
+		<form id="followUpQ" name="followUpForm">
+			<div id="followUp-container"></div>
+			<div class="buttons">
+				<button class="pull-left btn btn-primary" id="backBtn" type="button" onsubmit="return false">&#8249; Back</button>
+				<button class="pull-right btn btn-success" id="submitBtn" type="submit" onsubmit="return false">Submit</button>
 			</div>
 		</form>
 
@@ -36,16 +40,10 @@
 			</div>
 		</template>
 
-		<template id="binaryTemp">
-			<!-- Question -->
+		<template id="questTemp">
 			<p></p>
 			<div class="options"></div>
 		</template>
-
-		<template id="recallTemp">
-			<p></p>
-		</template>
-
 	</div>
     <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-app.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-auth.js"></script>

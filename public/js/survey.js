@@ -26,6 +26,9 @@ window.addEventListener('DOMContentLoaded', function () {
     		const nextBtn = document.querySelector("#nextBtn");
     		nextBtn.addEventListener('click', function(event) { nextSurvey(event)}, false);
 
+    		const backBtn = document.querySelector("#backBtn");
+    		backBtn.addEventListener('click', function(event) { displayPrimary(event)}, false);
+
 		} else {
 			console.error("No one is signed in");
 			location.replace("index.html");
@@ -43,18 +46,17 @@ function writeUserInfo(uid, userObj){
 
 /* Initalize survey questions from database */ 
 function initalizeSurvey(event){
-	var btn = event.target;
-	btn.style.display = "none";
-
+	document.querySelector('.surveyBtn').style.display = "none";
 	document.querySelector("#nextBtn").style.visibility = "visible";
 
 	const questionRef =  db.collection("questionnaires");
-	const container = document.querySelector("#survey-container");
+	const container = document.querySelector("#primary-container");
 
 	questionRef.get().then(function(querySnapshot) {
+		//Interate through each document in each section 
 	    querySnapshot.forEach(function(doc) {
 	        // doc.data() is never undefined for query doc snapshots
-	        console.log(doc.id, " => ", doc.data());
+	        //console.log(doc.id, " => ", doc.data());
 	        let sectionId = doc.id;
 	        let sectionTitle = doc.data().title;
 	        let sectionValue = doc.data().totalValue;
@@ -65,56 +67,58 @@ function initalizeSurvey(event){
 	       	let clonedTemplate = document.importNode(tSection.content, true);
 	       	container.appendChild(clonedTemplate);
 
-	       	const sectionContainer = document.querySelector("div#"+sectionId);
+	       	const sectionContainer = container.querySelector("div#"+sectionId);
 	       	sectionContainer.appendChild(clonedTemplate);
 	       	const questionSet = questionRef.doc(sectionId).collection("set");
 
 			questionSet.get().then(function(querySnapshot) {
+				//Primary Decision Makers
 			    querySnapshot.forEach(function(doc) {
-			        console.log(doc.id, " => ", doc.data());
+			        //console.log(doc.id, " => ", doc.data());
 			        
+			        // Each question 
 			        let questId = doc.id;
 			        let questData = doc.data();
+
 			        let questValue = questData.value;
-			        let questionNumber = questId.charAt(1);
+			        let questType = questData.questionType;
+			        let questNumber = questId.charAt(1);
 			        let followUpVal = questData.followUp ? questData.followUpVal : NaN; 
 
-			        if(questData.binaryQuestion){
-			        	let tBinary = document.querySelector('#binaryTemp');
-			        	tBinary.content.querySelector('p').innerHTML = questionNumber + ". " + questData.question;
-			        	tBinary.content.querySelector('p').setAttribute('id', questId);
-			        	let optionMARKUP = ``;
-			        	
-			        	questData.choice.options.forEach(function(option){
-			        		optionMARKUP += renderBinaryQuestion(questId, option.optionValue, questValue, option.isPositive, followUpVal);
-			        	});
+			        let tQuestion = document.querySelector('#questTemp');
+			       	tQuestion.content.querySelector('p').innerHTML = questNumber + ". " + questData.question;
+			        tQuestion.content.querySelector('p').setAttribute('id', questId);
 
-			        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
-			        	
-			        	let clonedTemplate = document.importNode(tBinary.content, true);
-			        	sectionContainer.appendChild(clonedTemplate);
-			        }
-			        else if(questData.recallQuestion){
-			        	console.log("Recall question found");
+			       	let optionMARKUP = ``;
 
-			        	let tBinary = document.querySelector('#binaryTemp');
-			        	tBinary.content.querySelector('p').innerHTML = questionNumber + ". " + questData.question;
-			        	tBinary.content.querySelector('p').setAttribute('id', questId);
-			        	let optionMARKUP = ``;
-			        	let optionValue = questValue/(questData.choice.options.length);
-			        	
-			        	questData.choice.options.forEach(function(option){
-			        		optionMARKUP += renderRecallQuestion(questId, option.optionValue, optionValue, followUpVal);
-			        	});
+			        // Displaying different types of questions
+			        switch(questType){
+			        	case 0:
+			        		break;
+			        	case 1: //Binary Question
+			        		questData.choice.options.forEach(function(option){
+			        			optionMARKUP += renderBinaryQuestion(questId, option.optionValue, questValue, option.isPositive, followUpVal);
+			        		});
+			        		break;
+			        	case 2: //Checkbox
+			        		let optionValue = questValue/(questData.choice.options.length);
 
-			        	tBinary.content.querySelector('div.options').innerHTML = optionMARKUP;
-			        	
-			        	let clonedTemplate = document.importNode(tBinary.content, true);
-			        	sectionContainer.appendChild(clonedTemplate);
+			        		questData.choice.options.forEach(function(option){
+			        			optionMARKUP += renderCheckboxQuestion(questId, option.optionValue, optionValue, followUpVal);
+			        		});
+			        		break;
+			        	case 3: //Dropdown
+			        		break;
+			        	case 4: //BMI
+			        		break;
+			        	default:
+			        		console.error("Invalid type of question found");
 			        }
-			        else{
-			        	console.log("Not a binary question or a recall question.")
-			        }
+
+			       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
+			       	let clonedTemplate = document.importNode(tQuestion.content, true);
+			       	sectionContainer.appendChild(clonedTemplate);
+			    
 			    });
 			});
 	    });
@@ -122,18 +126,135 @@ function initalizeSurvey(event){
 }
 
 function displayFollowUp(followUpList){
+	const container = document.querySelector("#followUp-container");
+	removeChildren(container);
+	document.querySelector("#primaryQ").style.display = "none";
+	document.querySelector("#followUpQ").style.display = "block";
+	toggleBtns(false);
+
+	const questionRef =  db.collection("questionnaires");
 	console.log(followUpList);
+
+	//Display Follow Up Questions
+	questionRef.get().then(function(querySnapshot) {
+		//Interate through each document in each section 
+	    querySnapshot.forEach(function(doc) {
+	        let sectionId = doc.id;
+	        let sectionTitle = doc.data().title;
+	        let followUps; 
+
+	        switch(sectionId){
+	        	case "basicInfo":
+	        		followUps = followUpList.m;
+	        		break;
+	        	case "health":
+	        		followUps = followUpList.d;
+	        		break;
+	        	case "lifestyle":
+	        		followUps = followUpList.l;
+	        		break;
+	        }
+
+	        let tSection = document.querySelector('#section');
+	       	tSection.content.querySelector('div').setAttribute('id', sectionId);      
+	       	tSection.content.querySelector('div h3').innerHTML = sectionTitle;
+	       	let clonedTemplate = document.importNode(tSection.content, true);
+	       	container.appendChild(clonedTemplate);
+
+	       	const sectionContainer = container.querySelector("div#"+sectionId);
+	       	sectionContainer.appendChild(clonedTemplate);
+	       	const questionSet = questionRef.doc(sectionId).collection("set");
+
+	       	//Iterate through followup questions 
+	       	for(var i = 0; i < followUps.length; i++){
+	       		let primaryQuestionId = followUps[i];
+	       		questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
+	       			subSnapShot.forEach(function(doc) {
+				    	if (doc.exists) {
+				    		console.log(doc.id, " =>?! ", doc.data());
+
+					        let questId = primaryQuestionId + doc.id;
+					        let questData = doc.data();
+					        let questLetter = questId.toUpperCase();
+					        let questType = questData.questionType;
+
+					        let tQuestion = document.querySelector('#questTemp');
+					       	tQuestion.content.querySelector('p').innerHTML = questLetter + ". " + questData.question;
+					        tQuestion.content.querySelector('p').setAttribute('id', questId);
+
+					       	let optionMARKUP = ``;
+
+					        // Displaying different types of questions
+					        switch(questType){
+					        	case 0:
+					        		break;
+					        	case 1: //Binary Question
+					        		console.log("Binary Question Found");
+					        		questData.choice.options.forEach(function(option){
+					        			optionMARKUP += renderFollowUpBinaryQuestions(questId, option.optionValue, option.priority);
+					        		});
+					        		break;
+					        	case 2: //Checkbox
+					        		console.log("Checkbox Question Found");
+					        		questData.choice.options.forEach(function(option){
+					        			optionMARKUP += renderFollowUpCheckboxQuestions(questId, option.optionValue, option.priority);
+					        		});
+					        		break;
+					        	case 3: //Dropdown
+					        		console.log("Dropdown Question Found");
+					        		let priority = questData.choice.priority;
+					        		questData.choice.options.forEach(function(option){
+					        			optionMARKUP += renderFollowUpDropdownOptions(option, priority);
+					        		});
+
+					        		optionMARKUP = renderFollowUpDropdownQuestion(questId, optionMARKUP);
+
+					        		break;
+					        	case 4: //BMI
+					        		break;
+					        	default:
+					        		console.error("Invalid type of question found");
+					        }
+			  
+					       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
+					       	let clonedTemplate = document.importNode(tQuestion.content, true);
+					       	sectionContainer.appendChild(clonedTemplate);
+				    	}
+	       			});
+				});
+	       	}
+	    });
+	});
 
 }
 
+function displayPrimary(event){
+	document.querySelector("#followUpQ").style.display = "none";
+	document.querySelector("#primaryQ").style.display = "block";
+	toggleBtns(true);
+}
+
+function toggleBtns(isPrimary){
+	if(isPrimary){	
+		document.querySelector("#nextBtn").style.visibility = "visible";
+		document.querySelector("#backBtn").style.visibility = "hidden";
+		document.querySelector("#submitBtn").style.visibility = "hidden";	
+	}
+	else{
+		document.querySelector("#nextBtn").style.visibility = "hidden";
+		document.querySelector("#backBtn").style.visibility = "visible";
+		document.querySelector("#submitBtn").style.visibility = "visible";
+	}
+}
+
 function nextSurvey(event){
-	const formName = "surveyForm";
+	const formName = "primaryQuestForm";
 	const form = document.forms[formName];
 
 	//To trigger the HTML5 Built-in Validation
 	if(form.checkValidity()){
 		event.preventDefault();
-		const fList = checkFollowUp(formName);
+		const fList = getFollowUpQ(formName);
 		displayFollowUp(fList);
 	}
 	else{
@@ -141,12 +262,20 @@ function nextSurvey(event){
 	}	
 }
 
-function checkFollowUp(formName){
+
+function getFollowUpQ(formName){
 	const form = document.forms[formName];
 	const radioInputList = form.querySelectorAll("input[type=radio]:checked");
 	const checkInputList = form.querySelectorAll("input[type=checkbox]:checked");
-	let followUpList = [];
+
+	let followUpList = {
+		m:[],
+		d:[],
+		l:[]
+	};
+
 	let questId = -1;
+	let questType;
 	let fValue = 0;
 	let checkboxText = [];
 	let checkboxValue = 0;
@@ -154,23 +283,29 @@ function checkFollowUp(formName){
 	radioInputList.forEach(function(input) {
 		questId = input.name.split('-')[1];
 		fValue = input.getAttribute('data-fvalue');
-		console.log("fValue for questionId " + questId + " is " + fValue);
 		if(input.value === fValue){
-			followUpList.push(questId);
+			followUpList[questId[0]].push(questId);
 		}
+		let responseObj = createResponseObj(input);
+		RESPONSE[questId] = responseObj;
 	});
 
 	checkInputList.forEach(function(input) {
 		questId = input.name.split('-')[1];
+		questType = input.name.split('-')[0];
 		checkboxText.push(input.getAttribute('data-text'));
 		checkboxValue += parseInt(input.value);
 		fValue = input.getAttribute('data-fvalue');
 	});	
 
 	if (checkboxValue === fValue){
-		followUpList.push(questId);
+		followUpList[questId[0]].push(questId);
 	}
+ 
+	let responseObj = {"answerValue": checkboxValue, "answerText": checkboxText};
+	RESPONSE[questId] = responseObj;
 
+	console.log(RESPONSE);
 	return followUpList;
 }
 
@@ -188,6 +323,8 @@ function storeSurvey(event){
 	}
 }
 
+
+//Need REFACTORING : 
 function storeSurveyDB(formName){
 	const userId = firebase.auth().currentUser.uid;
 	const userRef = db.collection("users").doc(userId);
@@ -258,8 +395,6 @@ function storeSurveyDB(formName){
 }
 
 function createResponseObj(input){
-	let answerValue = 0;
-
 	return {
 		"answerValue" : parseInt(input.value),
 		"answerText" : input.getAttribute('data-text')
@@ -274,11 +409,28 @@ function renderBinaryQuestion(questId, optionText, questionValue, isPositive, fo
 	return MARKUP;
 }
 
-function renderRecallQuestion(questId, optionText, questionValue, followUpVal){
+function renderCheckboxQuestion(questId, optionText, questionValue, followUpVal){
 	let MARKUP = ``;
 	let qValue = questionValue;
 	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-fvalue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
 	return MARKUP; 
+}
+
+function renderFollowUpBinaryQuestions(questId, optionText, priority){
+	return `<label class="radio-inline"><input type="radio" name="question-${questId}" value="${priority}" data-text="${optionText}" required>${optionText}</label>`;
+}
+
+function renderFollowUpCheckboxQuestions(questId, optionText, priority){
+	return `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${priority}" data-text="${optionText}">${optionText}</label>`;
+}
+
+function renderFollowUpDropdownOptions(optionText, priority){
+	return `<option value="${priority}" data-text="${optionText}">${optionText}</label>`;
+}
+
+function renderFollowUpDropdownQuestion(questId, optionsMARKUP){
+	let MARKUP = `<select class="form-control" name="question-${questId}">`;
+	return MARKUP + optionsMARKUP + `</select>`;
 }
 
 /*
@@ -291,10 +443,12 @@ function removeChildren(node){
 	}
  }
 
- function changeDisplay(className) {
+ function changeDisplay(className, display) {
     var elems = document.querySelectorAll(className);
     var index = 0, length = elems.length;
     for ( ; index < length; index++) {
-        elems[index].style.display = "none";
+        elems[index].style.display = display;
     }
 }
+
+const RESPONSE = {};
