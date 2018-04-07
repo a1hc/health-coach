@@ -4,6 +4,10 @@ body{
     margin:10px 10px;
 }
 
+.form-control{
+  /*width: 20rem;*/
+}
+
 .buttons{
   visibility: hidden;
 }

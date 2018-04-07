@@ -211,9 +211,10 @@ function displayFollowUp(followUpList){
 					        		});
 
 					        		optionMARKUP = renderFollowUpDropdownQuestion(questId, optionMARKUP);
-
 					        		break;
 					        	case 4: //BMI
+					        		console.log("BMI question Found");
+					        		optionMARKUP = renderBMIQUestion(questId);
 					        		break;
 					        	default:
 					        		console.error("Invalid type of question found");
@@ -351,6 +352,37 @@ function getFollowUpResponse(formName){
 		let responseObj = {"answerValue": optionValue, "answerText": optionText};
 		RESPONSE[questId] = responseObj;
 	});	
+
+
+	var heightFeet = form["height-feet"].value
+	var heightInch = form["height-inch"].value;
+	heightInch = parseFloat(heightFeet * 12) + parseFloat(heightInch);
+	var weightPound = form["weight"].value;
+	var BMIquestId = form["height-feet"].getAttribute('data-questId');
+	const BMI = calculateBMI(heightInch, weightPound);
+	console.log(BMI);
+	let responseObj = {};
+
+	if(BMI > 40){
+		responseObj = {"answerValue": 4, "answerText": BMI};
+	}
+	else if(BMI > 30){
+		responseObj = {"answerValue": 3, "answerText": BMI};
+	}
+	else if(BMI > 25){
+		responseObj = {"answerValue": 2, "answerText": BMI};
+	}
+	else{
+		responseObj = {"answerValue": 1, "answerText": BMI};
+	}
+
+	RESPONSE[BMIquestId] = responseObj;
+}
+
+function calculateBMI(heightInch, weightPound){
+	const weightKg = weightPound * 0.45359237;
+	const heightM = heightInch * 0.0254;
+	return Math.round((weightKg/(heightM*heightM)));
 }
  
 function storeSurveyDB(formName){
@@ -411,6 +443,13 @@ function renderFollowUpDropdownOptions(optionText, priority){
 function renderFollowUpDropdownQuestion(questId, optionsMARKUP){
 	let MARKUP = `<select class="form-control" name="question-${questId}" required"><option value="" disabled selected hidden>Please Choose...</option>`;
 	return MARKUP + optionsMARKUP + `</select>`;
+}
+
+function renderBMIQUestion(questId){
+	let MARKUP = `<label for="height-feet">Height(feet):</label><input type="number" class="form-control" name="height-feet" id="height-feet" data-questId="${questId}" size="1" required>
+				<label for="height-inch">Height(inch):</label><input type="number" class="form-control" name="height-inch" id="height-inch"  data-questId="${questId}" size="2" required>
+				<label for="weight">Weight(lbs):</label><input type="number" class="form-control" name="weight" id="weight"  data-questId="${questId}" size="3" required>`;
+	return MARKUP;
 }
 
 /*
