@@ -23,6 +23,16 @@ window.addEventListener('DOMContentLoaded', function () {
     		const surveyBtn = document.querySelector('.surveyBtn');
     		surveyBtn.addEventListener('click', function(event) { initalizeSurvey(event)}, false);
 
+    		const responseRef = db.collection("users").doc(user.uid).collection("response").doc("surveyResult");
+
+    		responseRef.get().then(function(doc){
+    			if(doc.exists){
+    				surveyBtn.innerHTML = "Retake Survey";
+    			}
+    		}).catch(function(error){
+    			console.error("Error getting document:", error);
+    		});
+
     		const nextBtn = document.querySelector("#nextBtn");
     		nextBtn.addEventListener('click', function(event) { nextSurvey(event)}, false);
 
@@ -51,7 +61,13 @@ function writeUserInfo(uid, userObj){
 function initalizeSurvey(event){
 	document.querySelector('.surveyBtn').style.display = "none";
 	document.querySelector("#nextBtn").style.visibility = "visible";
+	displayPrimaryQuestions(displayResponse);
+}
 
+/* Displays the primary questions of the survey 
+   @param - callback function to call after the questionnaries are generated 
+*/
+function displayPrimaryQuestions(callback){
 	const questionRef =  db.collection("questionnaires");
 	const container = document.querySelector("#primary-container");
 
@@ -106,9 +122,10 @@ function initalizeSurvey(event){
 			        	case 2: //Checkbox
 			        		let optionValue = questValue/(questData.choice.options.length);
 
-			        		questData.choice.options.forEach(function(option){
-			        			optionMARKUP += renderCheckboxQuestion(questId, option.optionValue, optionValue, followUpVal);
-			        		});
+			        		for(var index = 0; index < questData.choice.options.length; index++){
+			        			let option = questData.choice.options[index];
+			        			optionMARKUP += renderCheckboxQuestion(questId, option.optionValue, index, optionValue, followUpVal);
+			        		}
 			        		break;
 			        	case 3: //Dropdown
 			        		break;
@@ -121,14 +138,75 @@ function initalizeSurvey(event){
 			       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
 			       	let clonedTemplate = document.importNode(tQuestion.content, true);
 			       	sectionContainer.appendChild(clonedTemplate);
-			    
 			    });
 			});
 	    });
+	    callback("primaryQuestForm", true);
 	});
 }
 
-function displayFollowUp(followUpList){
+/* Displays the user response on the survey 
+   @param: formName - name of the form 
+   @param: isPrimary - true if the form is referring to the primaryQuestionForm; false otherwise;
+*/
+function displayResponse(formName, isPrimary){
+
+	const form = document.forms[formName];
+	const userId = firebase.auth().currentUser.uid;
+	const responseRef = db.collection("users").doc(userId).collection("response").doc("surveyResult");
+
+	responseRef.get().then(function(doc) {
+		if (doc.exists){
+			if(isPrimary){
+				const response = doc.data().primary;
+				for (var key in response){
+					if(response.hasOwnProperty(key)){
+						let questionName = "question-" + key; 
+						let answerValue = response[key].answerValue;
+						if(Array.isArray(answerValue)){
+							for(var index = 0; index < answerValue.length; index++){
+								$(".checkbox").find('input[value="' + answerValue[index] + '"]').prop('checked', true);
+							}
+						}
+						else{
+							form[questionName].value = answerValue;
+						}
+					}
+				}
+			}
+			else{
+				const response = doc.data().followUp;
+				for (var key in response){
+					if(response.hasOwnProperty(key)){
+						let questionName = "question-" + key; 
+						let answerValue = response[key].answerValue;
+						let propLength = Object.keys(answerValue).length;
+						if(propLength > 0){
+							for(var key in answerValue){
+								if(form[key] != undefined){
+									form[key].value = answerValue[key];
+								}
+							}	
+						}
+						else{
+							form[questionName].value = answerValue;
+						}
+					}
+				}
+			}
+		} else {
+			console.error("No such document!");
+		}
+	}).catch(function(error){
+		console.error("Error getting document:", error);
+	});
+}
+
+/* Displays the follow-up questions of the survey 
+   @param - callback function to call after the questionnaries are generated 
+   @followUpList - list of questions that requires follow-up questions
+*/
+function displayFollowUpQuestion(callback, followUpList){
 	const container = document.querySelector("#followUp-container");
 	removeChildren(container);
 	document.querySelector("#primaryQ").style.display = "none";
@@ -174,8 +252,6 @@ function displayFollowUp(followUpList){
 	       		questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
 	       			subSnapShot.forEach(function(doc) {
 				    	if (doc.exists) {
-				    		console.log(doc.id, " =>?! ", doc.data());
-
 					        let questId = primaryQuestionId + doc.id;
 					        let questData = doc.data();
 					        let questLetter = questId.toUpperCase();
@@ -228,16 +304,20 @@ function displayFollowUp(followUpList){
 				});
 	       	}
 	    });
+	    callback("followUpForm", false);
 	});
-
 }
 
+/* Displays primary question section */
 function displayPrimary(event){
 	document.querySelector("#followUpQ").style.display = "none";
 	document.querySelector("#primaryQ").style.display = "block";
 	toggleBtns(true);
 }
 
+/* Displays the proper set of buttons depending on its section 
+   @param isPrimary - true if primary questions section; false otherwise
+*/
 function toggleBtns(isPrimary){
 	if(isPrimary){	
 		document.querySelector("#nextBtn").style.visibility = "visible";
@@ -251,6 +331,7 @@ function toggleBtns(isPrimary){
 	}
 }
 
+/* Displays the followUp question section */
 function nextSurvey(event){
 	const formName = "primaryQuestForm";
 	const form = document.forms[formName];
@@ -259,13 +340,16 @@ function nextSurvey(event){
 	if(form.checkValidity()){
 		event.preventDefault();
 		const fList = getFollowUpQ(formName);
-		displayFollowUp(fList);
+		displayFollowUpQuestion(displayResponse, fList);
 	}
 	else{
 		return 0;
 	}	
 }
 
+/* Determines which primary questions require follow-up questions and update user response 
+   @param formName - name of the form element 
+*/
 function getFollowUpQ(formName){
 	const form = document.forms[formName];
 	const radioInputList = form.querySelectorAll("input[type=radio]:checked");
@@ -282,7 +366,8 @@ function getFollowUpQ(formName){
 	let questType;
 	let fValue = 0;
 	let checkboxText = [];
-	let checkboxValue = 0;
+	let checkboxValues = [];
+	let checkboxTotalValue = 0;
 
 	radioInputList.forEach(function(input) {
 		questId = input.name.split('-')[1];
@@ -294,31 +379,31 @@ function getFollowUpQ(formName){
 			surveyResult += parseInt(input.value); 
 		}
 		let responseObj = createResponseObj(input);
-		RESPONSE[questId] = responseObj;
+		RESPONSE.primary[questId] = responseObj;
 	});
 
 	checkInputList.forEach(function(input) {
 		questId = input.name.split('-')[1];
 		questType = input.name.split('-')[0];
 		checkboxText.push(input.getAttribute('data-text'));
-		checkboxValue += parseInt(input.value);
+		checkboxValues.push(parseInt(input.value));
+		checkboxTotalValue += parseInt(input.getAttribute('data-cvalue'));
 		fValue = input.getAttribute('data-fvalue');
 	});	
 
-	if (checkboxValue === fValue){
+	if (checkboxTotalValue === fValue){
 		followUpList[questId[0]].push(questId);
 	}
 
-	surveyResult+=checkboxValue;
+	surveyResult+=checkboxTotalValue;
  
-	let responseObj = {"answerValue": checkboxValue, "answerText": checkboxText};
-	RESPONSE[questId] = responseObj;
+	let responseObj = {"answerValue": checkboxValues, "answerText": checkboxText};
+	RESPONSE.primary[questId] = responseObj;
 	RESPONSE["primaryResult"] = surveyResult;
-
-	console.log(RESPONSE);
 	return followUpList;
 }
 
+/* Stores the user response into database */ 
 function storeSurvey(event){
 	const formName = "followUpForm";
 	const form = document.forms[formName];
@@ -342,7 +427,7 @@ function getFollowUpResponse(formName){
 	radioInputList.forEach(function(input) {
 		let questId = input.name.split('-')[1];
 		let responseObj = createResponseObj(input);
-		RESPONSE[questId] = responseObj;
+		RESPONSE.followUp[questId] = responseObj;
 	});
 
 	selectInputList.forEach(function(element) {
@@ -350,33 +435,35 @@ function getFollowUpResponse(formName){
 		let optionText = element.selectedOptions[0].text;
 		let optionValue = parseInt(element.selectedOptions[0].value);
 		let responseObj = {"answerValue": optionValue, "answerText": optionText};
-		RESPONSE[questId] = responseObj;
+		RESPONSE.followUp[questId] = responseObj;
 	});	
 
-
-	var heightFeet = form["height-feet"].value
-	var heightInch = form["height-inch"].value;
-	heightInch = parseFloat(heightFeet * 12) + parseFloat(heightInch);
-	var weightPound = form["weight"].value;
 	var BMIquestId = form["height-feet"].getAttribute('data-questId');
-	const BMI = calculateBMI(heightInch, weightPound);
-	console.log(BMI);
 	let responseObj = {};
+	let answerValue = {
+		"height-feet" : parseInt(form["height-feet"].value),
+		"height-inch" : parseInt(form["height-inch"].value),
+		"weight" : parseInt(form["weight"].value),
+		"priority" : 0
+	};
+	var heightInch = parseFloat(answerValue["height-feet"] * 12) + parseFloat(answerValue["height-inch"]);
+	const BMI = calculateBMI(heightInch, answerValue["weight"]);
 
 	if(BMI > 40){
-		responseObj = {"answerValue": 4, "answerText": BMI};
+		answerValue.priority = 4;
 	}
 	else if(BMI > 30){
-		responseObj = {"answerValue": 3, "answerText": BMI};
+		answerValue.priority = 3;
 	}
 	else if(BMI > 25){
-		responseObj = {"answerValue": 2, "answerText": BMI};
+		answerValue.priority = 2;
 	}
 	else{
-		responseObj = {"answerValue": 1, "answerText": BMI};
+		answerValue.priority = 1;
 	}
 
-	RESPONSE[BMIquestId] = responseObj;
+	responseObj = {"answerValue": answerValue, "answerText": BMI};
+	RESPONSE.followUp[BMIquestId] = responseObj;
 }
 
 function calculateBMI(heightInch, weightPound){
@@ -392,7 +479,7 @@ function storeSurveyDB(formName){
 	userRef.get().then(function(doc) {
 		if (doc.exists){			
 			userRef.collection("response").doc("surveyResult").set(RESPONSE).then(function() {
-				console.log("Successfully saved to database");
+				console.log(RESPONSE);
 				alert("Successfully saved your survey response!");
 				window.location.replace("survey.html");
 			}).catch(function(error) {
@@ -421,10 +508,10 @@ function renderBinaryQuestion(questId, optionText, questionValue, isPositive, fo
 	return MARKUP;
 }
 
-function renderCheckboxQuestion(questId, optionText, questionValue, followUpVal){
+function renderCheckboxQuestion(questId, optionText, optionValue, questionValue, followUpVal){
 	let MARKUP = ``;
 	let qValue = questionValue;
-	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${qValue}" data-fvalue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
+	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${optionValue}" data-cvalue=${qValue} data-fvalue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
 	return MARKUP; 
 }
 
@@ -446,9 +533,9 @@ function renderFollowUpDropdownQuestion(questId, optionsMARKUP){
 }
 
 function renderBMIQUestion(questId){
-	let MARKUP = `<label for="height-feet">Height(feet):</label><input type="number" class="form-control" name="height-feet" id="height-feet" data-questId="${questId}" size="1" required>
-				<label for="height-inch">Height(inch):</label><input type="number" class="form-control" name="height-inch" id="height-inch"  data-questId="${questId}" size="2" required>
-				<label for="weight">Weight(lbs):</label><input type="number" class="form-control" name="weight" id="weight"  data-questId="${questId}" size="3" required>`;
+	let MARKUP = `<div class="form-inline"><label for="height-feet">Height:&nbsp;</label><input type="number" class="form-control" name="height-feet" id="height-feet" data-questId="${questId}" size="1" required placeholder="Feet">
+				<input type="number" class="form-control" name="height-inch" id="height-inch" data-questId="${questId}" size="2" required placeholder="Inch"></div>
+				<div class="form-inline"><label for="weight">Weight(lbs):&nbsp;</label><input type="number" class="form-control" name="weight" id="weight"  data-questId="${questId}" size="3" required placeholder="Lbs"></div>`;
 	return MARKUP;
 }
 
@@ -470,4 +557,7 @@ function removeChildren(node){
     }
 }
 
-const RESPONSE = {};
+const RESPONSE = {
+	primary : {},
+	followUp : {}
+};
