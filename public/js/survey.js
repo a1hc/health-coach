@@ -23,11 +23,16 @@ window.addEventListener('DOMContentLoaded', function () {
     		const surveyBtn = document.querySelector('.surveyBtn');
     		surveyBtn.addEventListener('click', function(event) { initalizeSurvey(event)}, false);
 
+    		const viewBtn = document.querySelector('#viewBtn');
     		const responseRef = db.collection("users").doc(user.uid).collection("response").doc("surveyResult");
 
     		responseRef.get().then(function(doc){
     			if(doc.exists){
     				surveyBtn.innerHTML = "Retake Survey";
+    				viewBtn.addEventListener('click', function(event) { displayResponseView(event)}, false);
+    			}
+    			else{
+    				viewBtn.style.visibility = "hidden";
     			}
     		}).catch(function(error){
     			console.error("Error getting document:", error);
@@ -64,6 +69,92 @@ function initalizeSurvey(event){
 	displayPrimaryQuestions(displayResponse);
 }
 
+function displayResponseView(event){
+	document.querySelector('.surveyBtn').style.display = "inline-block";
+	document.querySelector('#viewBtn').style.display = "none";
+	document.querySelector("#primaryQ").style.display = "none";
+	document.querySelector("#followUpQ").style.display = "none";
+
+	const userId = firebase.auth().currentUser.uid;
+	const container = document.querySelector("#responseContainer");
+	const responseRef = db.collection("users").doc(userId).collection("response").doc("surveyResult");
+	const questionRef =  db.collection("questionnaires");
+
+	responseRef.get().then(function(doc) {
+		if (doc.exists){
+			const surveyResult = doc.data();
+			console.log(doc.id + "=> " , doc.data());
+			questionRef.get().then(function(querySnapshot) {
+				 querySnapshot.forEach(function(doc) {
+				 	console.log(doc.id, " => ", doc.data());
+				 	let sectionId = doc.id;
+	        		let sectionTitle = doc.data().title;
+
+					let tSection = document.querySelector('#section');
+		       		tSection.content.querySelector('div').setAttribute('id', sectionId);      
+		       		tSection.content.querySelector('div h3').innerHTML = sectionTitle;
+		       		let clonedTemplate = document.importNode(tSection.content, true);
+		       		container.appendChild(clonedTemplate);
+
+		       		const sectionContainer = container.querySelector("div#"+sectionId);
+		       		let tTable = document.querySelector("#tableTemp");
+		       		clonedTemplate = document.importNode(tTable.content, true);
+		       		sectionContainer.appendChild(clonedTemplate);
+
+		       		const questionSet = questionRef.doc(sectionId).collection("set");
+
+		       		questionSet.get().then(function(querySnapshot) {
+		       			querySnapshot.forEach(function(doc) {
+		       				let questId = doc.id;
+			        		let questData = doc.data();
+			        		let questValue = questData.value;
+			        		let questNumber = questId.charAt(1);
+
+		       				console.log(doc.id, " => ", doc.data());
+		       				let tQuestion = document.querySelector('#responseRow');
+		       				tQuestion.content.querySelector('td#questionNumCell').innerHTML = questNumber;
+		       				tQuestion.content.querySelector('td#questionCell').innerHTML = questData.question;
+			       			tQuestion.content.querySelector('td#responseCell').innerHTML = surveyResult.primary[questId].answerText;
+			       			let clonedTemplate = document.importNode(tQuestion.content, true);
+			       			sectionContainer.querySelector("tbody").appendChild(clonedTemplate);
+
+			       			let primaryQuestionId = questId;
+			       			if(questData.followUp){
+			       				questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
+	       							subSnapShot.forEach(function(doc) {
+	       								console.log(doc.id, " => ", doc.data());
+	       								let questId = primaryQuestionId + doc.id;
+					        			let questData = doc.data();
+					        			let questLetter = (primaryQuestionId.charAt(1) + doc.id).toUpperCase();
+					        			console.log(questId);
+
+										let tQuestion = document.querySelector('#responseRow');
+										tQuestion.content.querySelector('td#questionNumCell').innerHTML = questLetter;
+		       							tQuestion.content.querySelector('td#questionCell').innerHTML = questData.question;
+		       							if(surveyResult.followUp[questId]){
+		       								tQuestion.content.querySelector('td#responseCell').innerHTML = surveyResult.followUp[questId].answerText;
+		       							}
+		       							else{
+		       								tQuestion.content.querySelector('td#responseCell').innerHTML = "N/A";
+		       							}
+			       						let clonedTemplate = document.importNode(tQuestion.content, true);
+			       						sectionContainer.querySelector("tbody").appendChild(clonedTemplate);
+	       							});
+	       						});
+			       			}
+		       			});
+		       		});
+				 });
+			});
+		} else {
+			console.error("No such document!");
+		}
+	}).catch(function(error){
+		console.error("Error getting document:", error);
+	});
+
+}
+
 /* Displays the primary questions of the survey 
    @param - callback function to call after the questionnaries are generated 
 */
@@ -87,7 +178,7 @@ function displayPrimaryQuestions(callback){
 	       	container.appendChild(clonedTemplate);
 
 	       	const sectionContainer = container.querySelector("div#"+sectionId);
-	       	sectionContainer.appendChild(clonedTemplate);
+	       	//sectionContainer.appendChild(clonedTemplate);
 	       	const questionSet = questionRef.doc(sectionId).collection("set");
 
 			questionSet.get().then(function(querySnapshot) {
@@ -243,7 +334,7 @@ function displayFollowUpQuestion(callback, followUpList){
 	       	container.appendChild(clonedTemplate);
 
 	       	const sectionContainer = container.querySelector("div#"+sectionId);
-	       	sectionContainer.appendChild(clonedTemplate);
+	       	//sectionContainer.appendChild(clonedTemplate);
 	       	const questionSet = questionRef.doc(sectionId).collection("set");
 
 	       	//Iterate through followup questions 
@@ -549,13 +640,6 @@ function removeChildren(node){
 	}
  }
 
- function changeDisplay(className, display) {
-    var elems = document.querySelectorAll(className);
-    var index = 0, length = elems.length;
-    for ( ; index < length; index++) {
-        elems[index].style.display = display;
-    }
-}
 
 const RESPONSE = {
 	primary : {},

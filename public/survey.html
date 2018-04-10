@@ -18,7 +18,10 @@
 		<h2 class="text-center">Welcome&nbsp;<span id="display-name"></span>!</h2>
 		<div class="dashboard">
 			<button class="btn btn-success surveyBtn">Let's take a survey!</button>
-			<button class="btn btn-success viewSurvey">View Response</button>
+			<button class="btn btn-success" id="viewBtn">View Response</button>
+		</div>
+
+		<div class="container text-center" id="responseContainer">
 		</div>
 		
 		<form id="primaryQ" name="primaryQuestForm">
@@ -35,19 +38,41 @@
 				<button class="pull-right btn btn-success" id="submitBtn" onsubmit="return false">Submit</button>
 			</div>
 		</form>
-
-		<template id="section">
-			<div>
-				<hr/>
-				<h3 class="text-center"></h3>
-			</div>
-		</template>
-
-		<template id="questTemp">
-			<p></p>
-			<div class="options"></div>
-		</template>
 	</div>
+
+	<template id="tableTemp">
+		<table class="table container text-left">
+			<thead class="thead-light">
+				<tr>
+					<td scope="col">#</td>
+					<td scope="col">Question</td>
+					<td scope="col">Your Response</td>
+				</tr>
+			</thead>
+			<tbody></tbody>
+		</table>
+	</template>
+
+	<template id="section">
+		<div>
+			<hr/>
+			<h3 class="text-center"></h3>
+		</div>
+	</template>
+
+	<template id="responseRow">
+		<tr>
+			<td id="questionNumCell"></td>
+			<td id="questionCell"></td>
+			<td id="responseCell"></td>
+		</tr>
+	</template>
+
+	<template id="questTemp">
+		<p></p>
+		<div class="options"></div>
+	</template>
+
     <script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-app.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-auth.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/4.9.1/firebase-database.js"></script>
