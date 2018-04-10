@@ -66,6 +66,8 @@ function writeUserInfo(uid, userObj){
 function initalizeSurvey(event){
 	document.querySelector('.surveyBtn').style.display = "none";
 	document.querySelector("#nextBtn").style.visibility = "visible";
+	document.querySelector("#responseContainer").style.display = "none";
+	document.querySelector("#primaryQ").style.display = "block";
 	displayPrimaryQuestions(displayResponse);
 }
 
@@ -74,6 +76,7 @@ function displayResponseView(event){
 	document.querySelector('#viewBtn').style.display = "none";
 	document.querySelector("#primaryQ").style.display = "none";
 	document.querySelector("#followUpQ").style.display = "none";
+	document.querySelector("#responseContainer").style.display = "block";
 
 	const userId = firebase.auth().currentUser.uid;
 	const container = document.querySelector("#responseContainer");
@@ -83,10 +86,8 @@ function displayResponseView(event){
 	responseRef.get().then(function(doc) {
 		if (doc.exists){
 			const surveyResult = doc.data();
-			console.log(doc.id + "=> " , doc.data());
 			questionRef.get().then(function(querySnapshot) {
 				 querySnapshot.forEach(function(doc) {
-				 	console.log(doc.id, " => ", doc.data());
 				 	let sectionId = doc.id;
 	        		let sectionTitle = doc.data().title;
 
@@ -109,8 +110,7 @@ function displayResponseView(event){
 			        		let questData = doc.data();
 			        		let questValue = questData.value;
 			        		let questNumber = questId.charAt(1);
-
-		       				console.log(doc.id, " => ", doc.data());
+		
 		       				let tQuestion = document.querySelector('#responseRow');
 		       				tQuestion.content.querySelector('td#questionNumCell').innerHTML = questNumber;
 		       				tQuestion.content.querySelector('td#questionCell').innerHTML = questData.question;
@@ -122,11 +122,9 @@ function displayResponseView(event){
 			       			if(questData.followUp){
 			       				questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
 	       							subSnapShot.forEach(function(doc) {
-	       								console.log(doc.id, " => ", doc.data());
 	       								let questId = primaryQuestionId + doc.id;
 					        			let questData = doc.data();
 					        			let questLetter = (primaryQuestionId.charAt(1) + doc.id).toUpperCase();
-					        			console.log(questId);
 
 										let tQuestion = document.querySelector('#responseRow');
 										tQuestion.content.querySelector('td#questionNumCell').innerHTML = questLetter;
@@ -166,7 +164,6 @@ function displayPrimaryQuestions(callback){
 		//Interate through each document in each section 
 	    querySnapshot.forEach(function(doc) {
 	        // doc.data() is never undefined for query doc snapshots
-	        //console.log(doc.id, " => ", doc.data());
 	        let sectionId = doc.id;
 	        let sectionTitle = doc.data().title;
 	        let sectionValue = doc.data().totalValue;
@@ -184,8 +181,6 @@ function displayPrimaryQuestions(callback){
 			questionSet.get().then(function(querySnapshot) {
 				//Primary Decision Makers
 			    querySnapshot.forEach(function(doc) {
-			        //console.log(doc.id, " => ", doc.data());
-			        
 			        // Each question 
 			        let questId = doc.id;
 			        let questData = doc.data();
@@ -305,7 +300,6 @@ function displayFollowUpQuestion(callback, followUpList){
 	toggleBtns(false);
 
 	const questionRef =  db.collection("questionnaires");
-	console.log(followUpList);
 
 	//Display Follow Up Questions
 	questionRef.get().then(function(querySnapshot) {
@@ -359,19 +353,16 @@ function displayFollowUpQuestion(callback, followUpList){
 					        	case 0:
 					        		break;
 					        	case 1: //Binary Question
-					        		console.log("Binary Question Found");
 					        		questData.choice.options.forEach(function(option){
 					        			optionMARKUP += renderFollowUpBinaryQuestions(questId, option.optionValue, option.priority);
 					        		});
 					        		break;
 					        	case 2: //Checkbox
-					        		console.log("Checkbox Question Found");
 					        		questData.choice.options.forEach(function(option){
 					        			optionMARKUP += renderFollowUpCheckboxQuestions(questId, option.optionValue, option.priority);
 					        		});
 					        		break;
 					        	case 3: //Dropdown
-					        		console.log("Dropdown Question Found");
 					        		let priority = questData.choice.priority;
 					        		questData.choice.options.forEach(function(option){
 					        			optionMARKUP += renderFollowUpDropdownOptions(option, priority);
@@ -380,7 +371,6 @@ function displayFollowUpQuestion(callback, followUpList){
 					        		optionMARKUP = renderFollowUpDropdownQuestion(questId, optionMARKUP);
 					        		break;
 					        	case 4: //BMI
-					        		console.log("BMI question Found");
 					        		optionMARKUP = renderBMIQUestion(questId);
 					        		break;
 					        	default:
@@ -570,7 +560,6 @@ function storeSurveyDB(formName){
 	userRef.get().then(function(doc) {
 		if (doc.exists){			
 			userRef.collection("response").doc("surveyResult").set(RESPONSE).then(function() {
-				console.log(RESPONSE);
 				alert("Successfully saved your survey response!");
 				window.location.replace("survey.html");
 			}).catch(function(error) {
