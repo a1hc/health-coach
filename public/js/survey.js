@@ -472,7 +472,7 @@ function getFollowUpQ(formName){
 		fValue = input.getAttribute('data-fvalue');
 	});	
 
-	if (checkboxTotalValue === fValue){
+	if (checkboxTotalValue != fValue){
 		followUpList[questId[0]].push(questId);
 	}
 
