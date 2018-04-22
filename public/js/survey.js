@@ -150,7 +150,6 @@ function displayResponseView(event){
 	}).catch(function(error){
 		console.error("Error getting document:", error);
 	});
-
 }
 
 /* Displays the primary questions of the survey 
@@ -472,9 +471,7 @@ function getFollowUpQ(formName){
 		fValue = input.getAttribute('data-fvalue');
 	});	
 
-	if (checkboxTotalValue != fValue){
-		followUpList[questId[0]].push(questId);
-	}
+	followUpList[questId[0]].push(questId);
 
 	surveyResult+=checkboxTotalValue;
  

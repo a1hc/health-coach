@@ -4,8 +4,33 @@ body{
     margin:10px 10px;
 }
 
-.form-control{
-  /*width: 20rem;*/
+td{
+  text-align: center;
+}
+
+.negativeCell{
+  background-color: #ffd6cc;
+  color: white;
+}
+
+.positiveCell{
+  background-color: #b3e6b3;
+  color: white;
+}
+
+.priority-High{
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.priority-Moderate{
+  background-color: #ff9980;
+  color: white;
+}
+
+.priority-Low{
+  background-color: #ffd6cc;
+  color: white;
 }
 
 .buttons{
