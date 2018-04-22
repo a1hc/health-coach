@@ -516,32 +516,34 @@ function getFollowUpResponse(formName){
 		RESPONSE.followUp[questId] = responseObj;
 	});	
 
-	var BMIquestId = form["height-feet"].getAttribute('data-questId');
-	let responseObj = {};
-	let answerValue = {
-		"height-feet" : parseInt(form["height-feet"].value),
-		"height-inch" : parseInt(form["height-inch"].value),
-		"weight" : parseInt(form["weight"].value),
-		"priority" : 0
-	};
-	var heightInch = parseFloat(answerValue["height-feet"] * 12) + parseFloat(answerValue["height-inch"]);
-	const BMI = calculateBMI(heightInch, answerValue["weight"]);
+	if(form["height-feet"]){
+		var BMIquestId = form["height-feet"].getAttribute('data-questId');
+		let responseObj = {};
+		let answerValue = {
+			"height-feet" : parseInt(form["height-feet"].value),
+			"height-inch" : parseInt(form["height-inch"].value),
+			"weight" : parseInt(form["weight"].value),
+			"priority" : 0
+		};
+		var heightInch = parseFloat(answerValue["height-feet"] * 12) + parseFloat(answerValue["height-inch"]);
+		const BMI = calculateBMI(heightInch, answerValue["weight"]);
 
-	if(BMI > 40){
-		answerValue.priority = 4;
-	}
-	else if(BMI > 30){
-		answerValue.priority = 3;
-	}
-	else if(BMI > 25){
-		answerValue.priority = 2;
-	}
-	else{
-		answerValue.priority = 1;
-	}
+		if(BMI > 40){
+			answerValue.priority = 4;
+		}
+		else if(BMI > 30){
+			answerValue.priority = 3;
+		}
+		else if(BMI > 25){
+			answerValue.priority = 2;
+		}
+		else{
+			answerValue.priority = 1;
+		}
 
-	responseObj = {"answerValue": answerValue, "answerText": BMI};
-	RESPONSE.followUp[BMIquestId] = responseObj;
+		responseObj = {"answerValue": answerValue, "answerText": BMI};
+		RESPONSE.followUp[BMIquestId] = responseObj;
+	}
 }
 
 function calculateBMI(heightInch, weightPound){
