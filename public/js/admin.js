@@ -57,10 +57,10 @@ function initializeView(){
 function loadResponse(event){
 	const userId = event.target.value;
 	const container = document.querySelector("#viewContainer");
+	removeChildren(container);
 	const questionRef =  db.collection("questionnaires");
 	const enumRef = db.collection("enums").doc("priority");
 	const surveyResultRef = db.collection("users").doc(userId).collection("response").doc("surveyResult");
-
 
 	document.querySelector('#user-name').innerHTML = $("#users :selected").text();
 
@@ -146,12 +146,14 @@ function loadResponse(event){
 												let tQuestion = document.querySelector('#responseRow');
 												tQuestion.content.querySelector('td.questionNumCell').innerHTML = questLetter;
 				       							tQuestion.content.querySelector('td.questionCell').innerHTML = questData.question;
+				       							tQuestion.content.querySelector('td.valueCell').innerHTML = '';
 				       							if(surveyResult.followUp[questId]){
-				       								tQuestion.content.querySelector('td.valueCell').innerHTML = '';
 				       								tQuestion.content.querySelector('td.responseCell').innerHTML = surveyResult.followUp[questId].answerText;
 				       								if(questData.questionType == 4){
 				       									let priorityValue = priority[surveyResult.followUp[questId].answerValue.priority];
+
 				       									tQuestion.content.querySelector('td.priorityCell').innerHTML = priorityValue;
+
 				       									switch(priorityValue){
 															case "Low":
 				       											$(tQuestion.content.querySelector('td.priorityCell')).addClass("priority-Low");
@@ -161,6 +163,9 @@ function loadResponse(event){
 				       											break;
 				       										case "High":
 				       											$(tQuestion.content.querySelector('td.priorityCell')).addClass("priority-High");
+				       											break;
+				       										default:
+				       											tQuestion.content.querySelector('td.priorityCell').innerHTML = '';
 				       											break;
 				       									}
 				       								}
@@ -177,11 +182,15 @@ function loadResponse(event){
 				       										case "High":
 				       											$(tQuestion.content.querySelector('td.priorityCell')).addClass("priority-High");
 				       											break;
+				       										default:
+				       											tQuestion.content.querySelector('td.priorityCell').innerHTML = '';
+				       											break;
 				       									}
 				       								}
 				       							}
 				       							else{
-				       								tQuestion.content.querySelector('td#responseCell').innerHTML = "N/A";
+				       								tQuestion.content.querySelector('td.priorityCell').innerHTML = '';
+				       								tQuestion.content.querySelector('td.responseCell').innerHTML = "N/A";
 				       							}
 
 					       						let clonedTemplate = document.importNode(tQuestion.content, true);
@@ -202,9 +211,20 @@ function loadResponse(event){
 	}).catch(function(error){
 		console.error("Error getting document:", error);
 	});
-
-
 }
+
+
+
+/*
+* Removes all the children of the node.
+* Faster than innerHTML = ""
+*/
+function removeChildren(node){
+	while (node.firstChild) {
+		node.removeChild(node.firstChild);
+	}
+ }
+
 
 function renderOption(text, value){
 	return `<option value="${value}" >${text}</label>`;
