@@ -270,15 +270,15 @@ function displayResponse(formName, isPrimary){
 						//If the questions are dropdown 
 						if(key === 'd1a' || key === 'd1b' || key === 'd2b'){
 							let data_text = "[data-text='" + answerText + "']";
-							if(document.querySelectorAll(data_text)[0]){
-								document.querySelectorAll(data_text)[0].setAttribute("selected", "selected");
+							if(form[questionName].querySelectorAll(data_text)[0]){
+								form[questionName].querySelectorAll(data_text)[0].setAttribute("selected", "selected");
 							}
 							else{
 								data_text = "[data-text='Other']";
-								if(document.querySelectorAll(data_text)[0]){
-									document.querySelectorAll(data_text)[0].setAttribute("selected", "selected");
-									document.querySelector("#otherOptionText").style.display = "block";
-									document.querySelector("#otherOptionText").value = answerText;
+								if(form[questionName].querySelectorAll(data_text)[0]){
+									form[questionName].querySelectorAll(data_text)[0].setAttribute("selected", "selected");
+									document.querySelector(".otherOptionText-" + key).style.display = "block";
+									document.querySelector(".otherOptionText-" + key).value = answerText;
 								}
 							}
 						}
@@ -388,9 +388,12 @@ function displayFollowUpQuestion(callback, followUpList){
 					       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
 					       	let clonedTemplate = document.importNode(tQuestion.content, true);
 					       	sectionContainer.appendChild(clonedTemplate);
-					       	if(questId === "d1a"){
-					       		document.querySelector("#question-d1a").addEventListener('change', function(event) { showTextbox(event)}, false);
-					       		document.querySelector("#otherOptionText").addEventListener('change', function(event) { modifyDataText(event)}, false);
+					       	if(questId === "d1a" || questId === "d2b"){
+					       		let questionId = "#question-" + questId;
+					       		let element = document.querySelector(questionId);
+					       		element.addEventListener('change', function(event) { showTextbox(event)}, false);
+					       		let otherOptionText = ".otherOptionText-" + questId;
+								document.querySelectorAll(otherOptionText)[0].addEventListener('change', function(event) { modifyDataText(event)}, false);
 					       	}
 				    	}
 	       			});
@@ -617,7 +620,7 @@ function renderFollowUpCheckboxQuestions(questId, optionText, priority){
 
 function renderFollowUpDropdownOptions(optionText, priority){
 	if(optionText === "Other"){
-		return `<option value="${priority}" id="otherOption" data-text="${optionText}">${optionText}</label>`;
+		return `<option value="${priority}" class="otherOption" data-text="${optionText}">${optionText}</label>`;
 	}
 	return `<option value="${priority}" data-text="${optionText}">${optionText}</label>`;
 }
@@ -625,9 +628,9 @@ function renderFollowUpDropdownOptions(optionText, priority){
 function renderFollowUpDropdownQuestion(questId, optionsMARKUP){
 	let MARKUP = ``;
 
-	if(questId === "d1a"){
+	if(questId === "d1a" || questId === "d2b"){
 		MARKUP = `<select class="form-control" id="question-${questId}" name="question-${questId}" required><option value="" disabled selected hidden>Please Choose...</option>`;
-		return MARKUP + optionsMARKUP + `</select><input id="otherOptionText" class="d-none form-control" type='text' name='otherOption'">` ;
+		return MARKUP + optionsMARKUP + `</select><input id="input-${questId}" class="d-none form-control otherOptionText-${questId}" type='text'">` ;
 	}
 	else{
 		MARKUP = `<select class="form-control" name="question-${questId}" required"><option value="" disabled selected hidden>Please Choose...</option>`;
@@ -644,18 +647,22 @@ function renderBMIQUestion(questId){
 
 function showTextbox(event){
 	var $this = event.target;
-	var selectedValueId = $this.options[$this.selectedIndex].id;
-	if(selectedValueId === "otherOption"){
-		document.querySelector("#otherOptionText").style.display = "block";
+	var id = $this.id.split('-')[1];
+
+	var selectedValueText = $this.options[$this.selectedIndex].getAttribute("data-text");
+	if(selectedValueText === "Other"){
+		document.querySelector(".otherOptionText-" + id).style.display = "block";
 	}
 	else{
-		document.querySelector("#otherOptionText").style.display = "none";
+		document.querySelector(".otherOptionText-" + id).style.display = "none";
 	}
 }
 
 function modifyDataText(event){
 	var $this = event.target;
-	document.querySelector("#otherOption").setAttribute('data-text', $this.value);
+	var id = $this.id.split('-')[1];
+	var selectEle = document.querySelector("select#question-" + id);
+	selectEle.querySelector(".otherOption").setAttribute('data-text', $this.value);
 }
 
 /*
