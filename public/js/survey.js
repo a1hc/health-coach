@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded', function () {
     		};
 
     		document.querySelector("#display-name").innerHTML = user.displayName;
- 
+
     		var userRef = db.collection("users").doc(user.uid);
 			userRef.get().then(function(doc) {
 			    if (!doc.exists) {
@@ -62,7 +62,7 @@ function writeUserInfo(uid, userObj){
     });
 }
 
-/* Initalize survey questions from database */ 
+/* Initalize survey questions from database */
 function initalizeSurvey(event){
 	document.querySelector('.surveyBtn').style.display = "none";
 	document.querySelector("#nextBtn").style.visibility = "visible";
@@ -92,7 +92,7 @@ function displayResponseView(event){
 	        		let sectionTitle = doc.data().title;
 
 					let tSection = document.querySelector('#section');
-		       		tSection.content.querySelector('div').setAttribute('id', sectionId);      
+		       		tSection.content.querySelector('div').setAttribute('id', sectionId);
 		       		tSection.content.querySelector('div h3').innerHTML = sectionTitle;
 		       		let clonedTemplate = document.importNode(tSection.content, true);
 		       		container.appendChild(clonedTemplate);
@@ -110,7 +110,7 @@ function displayResponseView(event){
 			        		let questData = doc.data();
 			        		let questValue = questData.value;
 			        		let questNumber = questId.charAt(1);
-		
+
 		       				let tQuestion = document.querySelector('#responseRow');
 		       				tQuestion.content.querySelector('td#questionNumCell').innerHTML = questNumber;
 		       				tQuestion.content.querySelector('td#questionCell').innerHTML = questData.question;
@@ -152,15 +152,15 @@ function displayResponseView(event){
 	});
 }
 
-/* Displays the primary questions of the survey 
-   @param - callback function to call after the questionnaries are generated 
+/* Displays the primary questions of the survey
+   @param - callback function to call after the questionnaries are generated
 */
 function displayPrimaryQuestions(callback){
 	const questionRef =  db.collection("questionnaires");
 	const container = document.querySelector("#primary-container");
 
 	questionRef.get().then(function(querySnapshot) {
-		//Interate through each document in each section 
+		//Interate through each document in each section
 	    querySnapshot.forEach(function(doc) {
 	        // doc.data() is never undefined for query doc snapshots
 	        let sectionId = doc.id;
@@ -168,7 +168,7 @@ function displayPrimaryQuestions(callback){
 	        let sectionValue = doc.data().totalValue;
 
 	        let tSection = document.querySelector('#section');
-	       	tSection.content.querySelector('div').setAttribute('id', sectionId);      
+	       	tSection.content.querySelector('div').setAttribute('id', sectionId);
 	       	tSection.content.querySelector('div h3').innerHTML = sectionTitle;
 	       	let clonedTemplate = document.importNode(tSection.content, true);
 	       	container.appendChild(clonedTemplate);
@@ -180,14 +180,14 @@ function displayPrimaryQuestions(callback){
 			questionSet.get().then(function(querySnapshot) {
 				//Primary Decision Makers
 			    querySnapshot.forEach(function(doc) {
-			        // Each question 
+			        // Each question
 			        let questId = doc.id;
 			        let questData = doc.data();
 
 			        let questValue = questData.value;
 			        let questType = questData.questionType;
 			        let questNumber = questId.charAt(1);
-			        let followUpVal = questData.followUp ? questData.followUpVal : NaN; 
+			        let followUpVal = questData.followUp ? questData.followUpVal : NaN;
 
 			        let tQuestion = document.querySelector('#questTemp');
 			       	tQuestion.content.querySelector('p').innerHTML = questNumber + ". " + questData.question;
@@ -230,8 +230,8 @@ function displayPrimaryQuestions(callback){
 	});
 }
 
-/* Displays the user response on the survey 
-   @param: formName - name of the form 
+/* Displays the user response on the survey
+   @param: formName - name of the form
    @param: isPrimary - true if the form is referring to the primaryQuestionForm; false otherwise;
 */
 function displayResponse(formName, isPrimary){
@@ -246,7 +246,7 @@ function displayResponse(formName, isPrimary){
 				const response = doc.data().primary;
 				for (var key in response){
 					if(response.hasOwnProperty(key)){
-						let questionName = "question-" + key; 
+						let questionName = "question-" + key;
 						let answerValue = response[key].answerValue;
 						if(Array.isArray(answerValue)){
 							for(var index = 0; index < answerValue.length; index++){
@@ -263,15 +263,24 @@ function displayResponse(formName, isPrimary){
 				const response = doc.data().followUp;
 				for (var key in response){
 					if(response.hasOwnProperty(key)){
-						let questionName = "question-" + key; 
+						let questionName = "question-" + key;
+						let answerText = response[key].answerText;
 						let answerValue = response[key].answerValue;
 						let propLength = Object.keys(answerValue).length;
-						if(propLength > 0){
-							for(var key in answerValue){
-								if(form[key] != undefined){
-									form[key].value = answerValue[key];
+						//If the questions are dropdown 
+						if(key === 'd1a' || key === 'd1b' || key === 'd2b'){
+							let data_text = "[data-text='" + answerText + "']";
+							if(document.querySelectorAll(data_text)[0]){
+								document.querySelectorAll(data_text)[0].setAttribute("selected", "selected");
+							}
+							else{
+								data_text = "[data-text='Other']";
+								if(document.querySelectorAll(data_text)[0]){
+									document.querySelectorAll(data_text)[0].setAttribute("selected", "selected");
+									document.querySelector("#otherOptionText").style.display = "block";
+									document.querySelector("#otherOptionText").value = answerText;
 								}
-							}	
+							}
 						}
 						else{
 							form[questionName].value = answerValue;
@@ -287,8 +296,8 @@ function displayResponse(formName, isPrimary){
 	});
 }
 
-/* Displays the follow-up questions of the survey 
-   @param - callback function to call after the questionnaries are generated 
+/* Displays the follow-up questions of the survey
+   @param - callback function to call after the questionnaries are generated
    @followUpList - list of questions that requires follow-up questions
 */
 function displayFollowUpQuestion(callback, followUpList){
@@ -302,11 +311,11 @@ function displayFollowUpQuestion(callback, followUpList){
 
 	//Display Follow Up Questions
 	questionRef.get().then(function(querySnapshot) {
-		//Interate through each document in each section 
+		//Interate through each document in each section
 	    querySnapshot.forEach(function(doc) {
 	        let sectionId = doc.id;
 	        let sectionTitle = doc.data().title;
-	        let followUps; 
+	        let followUps;
 
 	        switch(sectionId){
 	        	case "basicInfo":
@@ -321,7 +330,7 @@ function displayFollowUpQuestion(callback, followUpList){
 	        }
 
 	        let tSection = document.querySelector('#section');
-	       	tSection.content.querySelector('div').setAttribute('id', sectionId);      
+	       	tSection.content.querySelector('div').setAttribute('id', sectionId);
 	       	tSection.content.querySelector('div h3').innerHTML = sectionTitle;
 	       	let clonedTemplate = document.importNode(tSection.content, true);
 	       	container.appendChild(clonedTemplate);
@@ -330,7 +339,7 @@ function displayFollowUpQuestion(callback, followUpList){
 	       	//sectionContainer.appendChild(clonedTemplate);
 	       	const questionSet = questionRef.doc(sectionId).collection("set");
 
-	       	//Iterate through followup questions 
+	       	//Iterate through followup questions
 	       	for(var i = 0; i < followUps.length; i++){
 	       		let primaryQuestionId = followUps[i];
 	       		questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
@@ -375,10 +384,14 @@ function displayFollowUpQuestion(callback, followUpList){
 					        	default:
 					        		console.error("Invalid type of question found");
 					        }
-			  
+
 					       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
 					       	let clonedTemplate = document.importNode(tQuestion.content, true);
 					       	sectionContainer.appendChild(clonedTemplate);
+					       	if(questId === "d1a"){
+					       		document.querySelector("#question-d1a").addEventListener('change', function(event) { showTextbox(event)}, false);
+					       		document.querySelector("#otherOptionText").addEventListener('change', function(event) { modifyDataText(event)}, false);
+					       	}
 				    	}
 	       			});
 				});
@@ -395,14 +408,14 @@ function displayPrimary(event){
 	toggleBtns(true);
 }
 
-/* Displays the proper set of buttons depending on its section 
+/* Displays the proper set of buttons depending on its section
    @param isPrimary - true if primary questions section; false otherwise
 */
 function toggleBtns(isPrimary){
-	if(isPrimary){	
+	if(isPrimary){
 		document.querySelector("#nextBtn").style.visibility = "visible";
 		document.querySelector("#backBtn").style.visibility = "hidden";
-		document.querySelector("#submitBtn").style.visibility = "hidden";	
+		document.querySelector("#submitBtn").style.visibility = "hidden";
 	}
 	else{
 		document.querySelector("#nextBtn").style.visibility = "hidden";
@@ -424,11 +437,11 @@ function nextSurvey(event){
 	}
 	else{
 		return 0;
-	}	
+	}
 }
 
-/* Determines which primary questions require follow-up questions and update user response 
-   @param formName - name of the form element 
+/* Determines which primary questions require follow-up questions and update user response
+   @param formName - name of the form element
 */
 function getFollowUpQ(formName){
 	const form = document.forms[formName];
@@ -456,7 +469,7 @@ function getFollowUpQ(formName){
 			followUpList[questId[0]].push(questId);
 		}
 		if(parseInt(input.value) > 0){
-			surveyResult += parseInt(input.value); 
+			surveyResult += parseInt(input.value);
 		}
 		let responseObj = createResponseObj(input);
 		RESPONSE.primary[questId] = responseObj;
@@ -469,19 +482,19 @@ function getFollowUpQ(formName){
 		checkboxValues.push(parseInt(input.value));
 		checkboxTotalValue += parseInt(input.getAttribute('data-cvalue'));
 		fValue = input.getAttribute('data-fvalue');
-	});	
+	});
 
 	followUpList[questId[0]].push(questId);
 
 	surveyResult+=checkboxTotalValue;
- 
+
 	let responseObj = {"answerValue": checkboxValues, "answerText": checkboxText};
 	RESPONSE.primary[questId] = responseObj;
 	RESPONSE["primaryResult"] = surveyResult;
 	return followUpList;
 }
 
-/* Stores the user response into database */ 
+/* Stores the user response into database */
 function storeSurvey(event){
 	const formName = "followUpForm";
 	const form = document.forms[formName];
@@ -510,11 +523,11 @@ function getFollowUpResponse(formName){
 
 	selectInputList.forEach(function(element) {
 		let questId = element.name.split('-')[1];
-		let optionText = element.selectedOptions[0].text;
+		let optionText = element.selectedOptions[0].getAttribute("data-text");
 		let optionValue = parseInt(element.selectedOptions[0].value);
 		let responseObj = {"answerValue": optionValue, "answerText": optionText};
 		RESPONSE.followUp[questId] = responseObj;
-	});	
+	});
 
 	if(form["height-feet"]){
 		var BMIquestId = form["height-feet"].getAttribute('data-questId');
@@ -551,15 +564,15 @@ function calculateBMI(heightInch, weightPound){
 	const heightM = heightInch * 0.0254;
 	return Math.round((weightKg/(heightM*heightM)));
 }
- 
+
 function storeSurveyDB(formName){
 	const userId = firebase.auth().currentUser.uid;
 	const userRef = db.collection("users").doc(userId);
 
 	userRef.get().then(function(doc) {
-		if (doc.exists){			
+		if (doc.exists){
 			userRef.collection("response").doc("surveyResult").set(RESPONSE).then(function() {
-				alert("Successfully saved your survey response!");
+				alert("Successfully saved your survey response! Your score is " + RESPONSE["primaryResult"] + "/100." );
 				window.location.replace("survey.html");
 			}).catch(function(error) {
 				console.error("Error while writing document: ", error);
@@ -591,7 +604,7 @@ function renderCheckboxQuestion(questId, optionText, optionValue, questionValue,
 	let MARKUP = ``;
 	let qValue = questionValue;
 	MARKUP = `<label class="checkbox"><input type="checkbox" name="question-${questId}" value="${optionValue}" data-cvalue=${qValue} data-fvalue = "${followUpVal}"  data-text="${optionText}">${optionText}</label>`;
-	return MARKUP; 
+	return MARKUP;
 }
 
 function renderFollowUpBinaryQuestions(questId, optionText, priority){
@@ -603,12 +616,23 @@ function renderFollowUpCheckboxQuestions(questId, optionText, priority){
 }
 
 function renderFollowUpDropdownOptions(optionText, priority){
+	if(optionText === "Other"){
+		return `<option value="${priority}" id="otherOption" data-text="${optionText}">${optionText}</label>`;
+	}
 	return `<option value="${priority}" data-text="${optionText}">${optionText}</label>`;
 }
 
 function renderFollowUpDropdownQuestion(questId, optionsMARKUP){
-	let MARKUP = `<select class="form-control" name="question-${questId}" required"><option value="" disabled selected hidden>Please Choose...</option>`;
-	return MARKUP + optionsMARKUP + `</select>`;
+	let MARKUP = ``;
+
+	if(questId === "d1a"){
+		MARKUP = `<select class="form-control" id="question-${questId}" name="question-${questId}" required><option value="" disabled selected hidden>Please Choose...</option>`;
+		return MARKUP + optionsMARKUP + `</select><input id="otherOptionText" class="d-none form-control" type='text' name='otherOption'">` ;
+	}
+	else{
+		MARKUP = `<select class="form-control" name="question-${questId}" required"><option value="" disabled selected hidden>Please Choose...</option>`;
+		return MARKUP + optionsMARKUP + `</select>`;
+	}
 }
 
 function renderBMIQUestion(questId){
@@ -616,6 +640,22 @@ function renderBMIQUestion(questId){
 				<input type="number" class="form-control" name="height-inch" id="height-inch" data-questId="${questId}" size="2" required placeholder="Inch"></div>
 				<div class="form-inline"><label for="weight">Weight(lbs):&nbsp;</label><input type="number" class="form-control" name="weight" id="weight"  data-questId="${questId}" size="3" required placeholder="Lbs"></div>`;
 	return MARKUP;
+}
+
+function showTextbox(event){
+	var $this = event.target;
+	var selectedValueId = $this.options[$this.selectedIndex].id;
+	if(selectedValueId === "otherOption"){
+		document.querySelector("#otherOptionText").style.display = "block";
+	}
+	else{
+		document.querySelector("#otherOptionText").style.display = "none";
+	}
+}
+
+function modifyDataText(event){
+	var $this = event.target;
+	document.querySelector("#otherOption").setAttribute('data-text', $this.value);
 }
 
 /*
