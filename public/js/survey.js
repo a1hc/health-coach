@@ -267,7 +267,7 @@ function displayResponse(formName, isPrimary){
 						let answerText = response[key].answerText;
 						let answerValue = response[key].answerValue;
 						let propLength = Object.keys(answerValue).length;
-						//If the questions are dropdown 
+						//If the questions are dropdown -- TODO: remove this 
 						if(key === 'd1a' || key === 'd1b' || key === 'd2b'){
 							let data_text = "[data-text='" + answerText + "']";
 							if(form[questionName].querySelectorAll(data_text)[0]){
@@ -336,8 +336,8 @@ function displayFollowUpQuestion(callback, followUpList){
 	       	container.appendChild(clonedTemplate);
 
 	       	const sectionContainer = container.querySelector("div#"+sectionId);
-	       	//sectionContainer.appendChild(clonedTemplate);
 	       	const questionSet = questionRef.doc(sectionId).collection("set");
+	       	let followUpQuestNum = 0; 
 
 	       	//Iterate through followup questions
 	       	for(var i = 0; i < followUps.length; i++){
@@ -345,9 +345,10 @@ function displayFollowUpQuestion(callback, followUpList){
 	       		questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
 	       			subSnapShot.forEach(function(doc) {
 				    	if (doc.exists) {
+				    		console.log("followup question " + doc.id);
 					        let questId = primaryQuestionId + doc.id;
 					        let questData = doc.data();
-					        let questLetter = questId.toUpperCase();
+					        let questLetter = ++followUpQuestNum; 
 					        let questType = questData.questionType;
 
 					        let tQuestion = document.querySelector('#questTemp');
@@ -388,6 +389,7 @@ function displayFollowUpQuestion(callback, followUpList){
 					       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
 					       	let clonedTemplate = document.importNode(tQuestion.content, true);
 					       	sectionContainer.appendChild(clonedTemplate);
+					       	//TODO: needs to remove this portion
 					       	if(questId === "d1a" || questId === "d2b"){
 					       		let questionId = "#question-" + questId;
 					       		let element = document.querySelector(questionId);
@@ -575,8 +577,7 @@ function storeSurveyDB(formName){
 	userRef.get().then(function(doc) {
 		if (doc.exists){
 			userRef.collection("response").doc("surveyResult").set(RESPONSE).then(function() {
-				alert("Successfully saved your survey response! Your score is " + RESPONSE["primaryResult"] + "/100." );
-				window.location.replace("survey.html");
+				displayScore(RESPONSE["primaryResult"]);
 			}).catch(function(error) {
 				console.error("Error while writing document: ", error);
 			});
@@ -586,6 +587,18 @@ function storeSurveyDB(formName){
 	}).catch(function(error){
 		console.error("Error getting document:", error);
 	});
+}
+
+function displayScore(score){
+    bootbox.alert({
+    	size: "large",
+    	title: "Confirmation",
+    	message: "Successfully saved your survey response! Your score is <b>" + score + "/100</b>.",
+    	backdrop: true,
+    	callback: function(){
+    		window.location.replace("survey.html");
+    	}
+    });
 }
 
 function createResponseObj(input){
