@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', function () {
 	});
 });
 
-/* REFACTOR NEEDED: Writes the user data to FireStore */
+/* Writes the user data to FireStore */
 function writeUserInfo(uid, userObj){
     db.collection("users").doc(uid).set(userObj).then(function() {
     }).catch(function(error) {
@@ -267,8 +267,8 @@ function displayResponse(formName, isPrimary){
 						let answerText = response[key].answerText;
 						let answerValue = response[key].answerValue;
 						let propLength = Object.keys(answerValue).length;
-						//If the questions are dropdown -- TODO: remove this 
-						if(key === 'd1a' || key === 'd1b' || key === 'd2b'){
+						//If the questions are dropdown
+						if(response[key].questionType === 3){
 							let data_text = "[data-text='" + answerText + "']";
 							if(form[questionName].querySelectorAll(data_text)[0]){
 								form[questionName].querySelectorAll(data_text)[0].setAttribute("selected", "selected");
@@ -345,7 +345,6 @@ function displayFollowUpQuestion(callback, followUpList){
 	       		questionSet.doc(primaryQuestionId).collection("subSet").get().then(function(subSnapShot) {
 	       			subSnapShot.forEach(function(doc) {
 				    	if (doc.exists) {
-				    		console.log("followup question " + doc.id);
 					        let questId = primaryQuestionId + doc.id;
 					        let questData = doc.data();
 					        let questLetter = ++followUpQuestNum; 
@@ -389,13 +388,17 @@ function displayFollowUpQuestion(callback, followUpList){
 					       	tQuestion.content.querySelector('div.options').innerHTML = optionMARKUP;
 					       	let clonedTemplate = document.importNode(tQuestion.content, true);
 					       	sectionContainer.appendChild(clonedTemplate);
-					       	//TODO: needs to remove this portion
-					       	if(questId === "d1a" || questId === "d2b"){
+					       	
+					       	if(questType === 3){
 					       		let questionId = "#question-" + questId;
 					       		let element = document.querySelector(questionId);
-					       		element.addEventListener('change', function(event) { showTextbox(event)}, false);
-					       		let otherOptionText = ".otherOptionText-" + questId;
-								document.querySelectorAll(otherOptionText)[0].addEventListener('change', function(event) { modifyDataText(event)}, false);
+					       		if(element){
+					       			element.addEventListener('change', function(event) { showTextbox(event)}, false);
+					       			let otherOptionText = ".otherOptionText-" + questId;
+									if(document.querySelectorAll(otherOptionText)[0]){
+										document.querySelectorAll(otherOptionText)[0].addEventListener('change', function(event) { modifyDataText(event)}, false);
+									}
+					       		}
 					       	}
 				    	}
 	       			});
@@ -493,7 +496,7 @@ function getFollowUpQ(formName){
 
 	surveyResult+=checkboxTotalValue;
 
-	let responseObj = {"answerValue": checkboxValues, "answerText": checkboxText};
+	let responseObj = {"answerValue": checkboxValues, "answerText": checkboxText, "questionType": 2};
 	RESPONSE.primary[questId] = responseObj;
 	RESPONSE["primaryResult"] = surveyResult;
 	return followUpList;
@@ -530,7 +533,7 @@ function getFollowUpResponse(formName){
 		let questId = element.name.split('-')[1];
 		let optionText = element.selectedOptions[0].getAttribute("data-text");
 		let optionValue = parseInt(element.selectedOptions[0].value);
-		let responseObj = {"answerValue": optionValue, "answerText": optionText};
+		let responseObj = {"answerValue": optionValue, "answerText": optionText, "questionType": 3};
 		RESPONSE.followUp[questId] = responseObj;
 	});
 
@@ -547,19 +550,19 @@ function getFollowUpResponse(formName){
 		const BMI = calculateBMI(heightInch, answerValue["weight"]);
 
 		if(BMI > 40){
-			answerValue.priority = 4;
-		}
-		else if(BMI > 30){
 			answerValue.priority = 3;
 		}
-		else if(BMI > 25){
+		else if(BMI > 30){
 			answerValue.priority = 2;
 		}
-		else{
+		else if(BMI > 25){
 			answerValue.priority = 1;
 		}
+		else{
+			answerValue.priority = 0;
+		}
 
-		responseObj = {"answerValue": answerValue, "answerText": BMI};
+		responseObj = {"answerValue": answerValue, "answerText": BMI, "questionType": 4};
 		RESPONSE.followUp[BMIquestId] = responseObj;
 	}
 }
@@ -604,7 +607,8 @@ function displayScore(score){
 function createResponseObj(input){
 	return {
 		"answerValue" : parseInt(input.value),
-		"answerText" : input.getAttribute('data-text')
+		"answerText" : input.getAttribute('data-text'),
+		"questionType" : 1
 	};
 }
 
@@ -660,14 +664,18 @@ function renderBMIQUestion(questId){
 
 function showTextbox(event){
 	var $this = event.target;
-	var id = $this.id.split('-')[1];
+	if($this){
+		var id = $this.id.split('-')[1];
 
-	var selectedValueText = $this.options[$this.selectedIndex].getAttribute("data-text");
-	if(selectedValueText === "Other"){
-		document.querySelector(".otherOptionText-" + id).style.display = "block";
-	}
-	else{
-		document.querySelector(".otherOptionText-" + id).style.display = "none";
+		if($this.options[$this.selectedIndex]) {
+			var selectedValueText = $this.options[$this.selectedIndex].getAttribute("data-text");
+			if(selectedValueText === "Other"){
+				document.querySelector(".otherOptionText-" + id).style.display = "block";
+			}
+			else{
+				document.querySelector(".otherOptionText-" + id).style.display = "none";
+			}
+		}
 	}
 }
 
@@ -678,16 +686,11 @@ function modifyDataText(event){
 	selectEle.querySelector(".otherOption").setAttribute('data-text', $this.value);
 }
 
-/*
-* Removes all the children of the node.
-* Faster than innerHTML = ""
-*/
 function removeChildren(node){
 	while (node.firstChild) {
 		node.removeChild(node.firstChild);
 	}
  }
-
 
 const RESPONSE = {
 	primary : {},

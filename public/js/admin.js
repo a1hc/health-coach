@@ -46,10 +46,10 @@ function initializeView(){
 			let userId = doc.id;
 			let userName = doc.data().name; 
 
-			//TODO: Remove these comments 
-			//if(userId != signedUserId){
+
+			if(userId != signedUserId){
 				document.querySelector("select#users").innerHTML += renderOption(userName, userId);
-			//}
+			}
 		});
 	});
 }
@@ -57,7 +57,9 @@ function initializeView(){
 function loadResponse(event){
 	const userId = event.target.value;
 	const container = document.querySelector("#viewContainer");
+
 	removeChildren(container);
+
 	const questionRef =  db.collection("questionnaires");
 	const enumRef = db.collection("enums").doc("priority");
 	const surveyResultRef = db.collection("users").doc(userId).collection("response").doc("surveyResult");
@@ -213,12 +215,6 @@ function loadResponse(event){
 	});
 }
 
-
-
-/*
-* Removes all the children of the node.
-* Faster than innerHTML = ""
-*/
 function removeChildren(node){
 	while (node.firstChild) {
 		node.removeChild(node.firstChild);
