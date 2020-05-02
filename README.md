@@ -1,1 +1,1 @@
-# America's #1 Health Coach Web Application
+# LA Health Coaches Web Application
